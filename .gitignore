@@ -1,0 +1,36 @@
+# Custom project directories
+chroma_db/
+uploads/
+docs/
+.trae/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+
+# Database
+app.db
+*.sqlite3
+*.db
+
+# Node / JS
+node_modules/
+dist/
+build/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
