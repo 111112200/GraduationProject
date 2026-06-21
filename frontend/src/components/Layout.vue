@@ -46,7 +46,22 @@
         </div>
         <div class="topbar-right">
           <span class="topbar-time">{{ currentTime }}</span>
-          <div class="topbar-avatar">👤</div>
+          <div class="user-profile" @mouseenter="showDropdown = true" @mouseleave="hideDropdown">
+            <div class="topbar-avatar">👤</div>
+            <span class="username">{{ currentUsername }}</span>
+            <!-- 下拉菜单 -->
+            <div v-show="showDropdown" class="dropdown-menu" @mouseenter="cancelHideDropdown" @mouseleave="hideDropdown">
+              <div class="dropdown-item" @click="onChangePassword">
+                <span class="dropdown-icon">🔐</span>
+                <span>修改密码</span>
+              </div>
+              <div class="dropdown-divider"></div>
+              <div class="dropdown-item dropdown-item-danger" @click="handleLogout">
+                <span class="dropdown-icon">🚪</span>
+                <span>退出账户</span>
+              </div>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -61,6 +76,7 @@
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { logout } from '../api/auth'
 
 const route = useRoute()
 
@@ -79,7 +95,10 @@ const pageTitleMap = {
 const pageTitle = computed(() => pageTitleMap[route.name] || '首页')
 
 const currentTime = ref('')
+const currentUsername = ref(localStorage.getItem('username') || '用户')
+const showDropdown = ref(false)
 let timer = null
+let dropdownTimer = null
 
 function updateTime() {
   const now = new Date()
@@ -90,11 +109,40 @@ function updateTime() {
   })
 }
 
+function handleLogout() {
+  if (confirm('确定要退出登录吗？')) {
+    logout()
+  }
+}
+
+function onChangePassword() {
+  // 预留：修改密码功能
+  alert('修改密码功能暂未实现')
+}
+
+function hideDropdown() {
+  dropdownTimer = setTimeout(() => {
+    showDropdown.value = false
+  }, 300)
+}
+
+function cancelHideDropdown() {
+  if (dropdownTimer) {
+    clearTimeout(dropdownTimer)
+    dropdownTimer = null
+  }
+}
+
 onMounted(() => {
   updateTime()
   timer = setInterval(updateTime, 10000)
 })
-onUnmounted(() => clearInterval(timer))
+onUnmounted(() => {
+  clearInterval(timer)
+  if (dropdownTimer) {
+    clearTimeout(dropdownTimer)
+  }
+})
 </script>
 
 <style scoped>
@@ -263,6 +311,71 @@ onUnmounted(() => clearInterval(timer))
 
 .topbar-avatar:hover {
   box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.15);
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-left: 16px;
+  border-left: 1px solid var(--gray-200);
+  position: relative;
+}
+
+.username {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+/* 下拉菜单 */
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 2px);
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  min-width: 140px;
+  z-index: 300;
+  padding: 6px 0;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--gray-700);
+  transition: background var(--transition-fast);
+  white-space: nowrap;
+}
+
+.dropdown-item:hover {
+  background: var(--gray-100);
+}
+
+.dropdown-item-danger {
+  color: var(--danger);
+}
+
+.dropdown-item-danger:hover {
+  background: var(--danger-bg);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--gray-200);
+  margin: 6px 0;
+}
+
+.dropdown-icon {
+  font-size: 14px;
+  width: 20px;
+  text-align: center;
 }
 
 /* ===== 主内容区 ===== */
