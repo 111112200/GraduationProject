@@ -35,6 +35,7 @@ DEFAULT_SIMILAR_THRESHOLD = 0.5
 # 文本分块参数
 CHUNK_SIZE = 200
 CHUNK_OVERLAP = 80
-TOP_K = 10
-
-
+# ===== JWT Authentication =====
+SECRET_KEY = os.getenv("SECRET_KEY", "super-secret-graduation-project-key")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days

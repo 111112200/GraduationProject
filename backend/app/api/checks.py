@@ -7,14 +7,15 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.schemas.check import CreateCheckTaskRequest
-from app.models import CheckTask, CheckResultSummary, CheckResultDetail, Report
+from app.models import CheckTask, CheckResultSummary, CheckResultDetail, Report, User
+from app.api.deps import get_current_user
 
 router = APIRouter()
 
 
 @router.get("")
-async def api_list_checks(db: Session = Depends(get_db)):
-    tasks = db.query(CheckTask).order_by(CheckTask.created_at.desc()).limit(50).all()
+async def api_list_checks(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    tasks = db.query(CheckTask).filter(CheckTask.user_id == current_user.id).order_by(CheckTask.created_at.desc()).limit(50).all()
     return {
         "tasks": [
             {
@@ -43,8 +44,10 @@ async def api_create_check(
     body: CreateCheckTaskRequest,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     task = CheckTask(
+        user_id=current_user.id,
         name=body.name,
         experiment_id=body.experimentId,
         mode=body.mode,
@@ -66,12 +69,13 @@ async def api_create_check(
 async def api_export_check_result(
     task_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """导出查重任务结果为 Excel 文件"""
     import openpyxl
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
-    task = db.query(CheckTask).filter(CheckTask.id == task_id).first()
+    task = db.query(CheckTask).filter(CheckTask.id == task_id, CheckTask.user_id == current_user.id).first()
     if not task:
         raise HTTPException(404, "任务不存在")
     if task.status != "COMPLETED":
@@ -308,8 +312,9 @@ async def api_export_check_result(
 async def api_get_check_task(
     task_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    task = db.query(CheckTask).filter(CheckTask.id == task_id).first()
+    task = db.query(CheckTask).filter(CheckTask.id == task_id, CheckTask.user_id == current_user.id).first()
     if not task:
         raise HTTPException(404, "任务不存在")
     summaries = db.query(CheckResultSummary, Report).join(
@@ -338,8 +343,9 @@ async def api_get_check_task(
 async def api_delete_check_task(
     task_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    task = db.query(CheckTask).filter(CheckTask.id == task_id).first()
+    task = db.query(CheckTask).filter(CheckTask.id == task_id, CheckTask.user_id == current_user.id).first()
     if not task:
         raise HTTPException(404, "任务不存在")
     # 清理 ChromaDB 中的临时向量索引

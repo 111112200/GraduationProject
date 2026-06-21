@@ -9,8 +9,12 @@ import CheckCreate from '../views/CheckCreate.vue'
 import CheckDetail from '../views/CheckDetail.vue'
 import LibraryManage from '../views/LibraryManage.vue'
 import BasicDataManage from '../views/BasicDataManage.vue'
+import Login from '../views/Login.vue'
+import Register from '../views/Register.vue'
 
 const routes = [
+  { path: '/login', name: 'login', component: Login, meta: { public: true } },
+  { path: '/register', name: 'register', component: Register, meta: { public: true } },
   {
     path: '/',
     component: Layout,
@@ -34,5 +38,15 @@ const router = createRouter({
   routes,
 })
 
-export default router
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = !!localStorage.getItem('token')
+  if (!to.meta.public && !isAuthenticated) {
+    next({ name: 'login' })
+  } else if ((to.name === 'login' || to.name === 'register') && isAuthenticated) {
+    next({ name: 'dashboard' })
+  } else {
+    next()
+  }
+})
 
+export default router

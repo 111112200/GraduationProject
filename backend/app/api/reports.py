@@ -5,7 +5,8 @@ from typing import List, Optional
 from app.core.database import get_db
 from app.services.report_service import upload_reports, get_reports, delete_report, get_report
 from app.services.chunk_service import calculate_report_chunks
-from app.models import Report
+from app.models import Report, User
+from app.api.deps import get_current_user
 
 router = APIRouter()
 
@@ -16,8 +17,9 @@ async def api_upload_reports(
     experimentId: Optional[int] = Form(None),
     classId: int = Form(...),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    result = await upload_reports(db, files, experimentId, classId)
+    result = await upload_reports(db, files, experimentId, classId, current_user.id)
     return result
 
 
@@ -27,8 +29,9 @@ async def api_get_reports(
     classId: Optional[int] = None,
     status: Optional[str] = None,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    reports = get_reports(db, experimentId, classId, status)
+    reports = get_reports(db, experimentId, classId, status, current_user.id)
     return {"reports": reports}
 
 
@@ -36,13 +39,18 @@ async def api_get_reports(
 async def api_get_report_result(
     report_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     from app.models import CheckResultSummary, CheckResultDetail, Report
+    
+    # Verify report belongs to user
+    report = db.query(Report).filter(Report.id == report_id, Report.user_id == current_user.id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="报告不存在")
     summary = db.query(CheckResultSummary).filter(
         CheckResultSummary.report_id == report_id
     ).order_by(CheckResultSummary.created_at.desc()).first()
     if not summary:
-        report = db.query(Report).filter(Report.id == report_id).first()
         return {
             "reportId": report_id,
             "hasCheckResult": False,
@@ -53,7 +61,6 @@ async def api_get_report_result(
     details = db.query(CheckResultDetail).filter(
         CheckResultDetail.summary_id == summary.id
     ).all()
-    report = db.query(Report).filter(Report.id == report_id).first()
     target_reports = {}
     for d in details:
         if d.target_report_id not in target_reports:
@@ -84,8 +91,13 @@ async def api_get_report_result(
 async def api_get_report_chunks(
     report_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """返回报告的向量分块详情，用于可视化预处理效果"""
+    report = db.query(Report).filter(Report.id == report_id, Report.user_id == current_user.id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="报告不存在")
+        
     result = calculate_report_chunks(db, report_id)
     if result is None:
         raise HTTPException(status_code=404, detail="报告不存在")
@@ -96,8 +108,9 @@ async def api_get_report_chunks(
 async def api_get_report(
     report_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    report = get_report(db, report_id)
+    report = get_report(db, report_id, current_user.id)
     if not report:
         raise HTTPException(status_code=404, detail="报告不存在")
     return report
@@ -106,8 +119,9 @@ async def api_get_report(
 async def api_delete_report(
     report_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    success = delete_report(db, report_id)
+    success = delete_report(db, report_id, current_user.id)
     if not success:
         raise HTTPException(status_code=404, detail="报告不存在")
     return {"success": True}

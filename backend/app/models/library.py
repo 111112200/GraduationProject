@@ -8,7 +8,7 @@ class LibraryReport(Base):
     __tablename__ = "library_report"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    report_id = Column(Integer, ForeignKey("report.id"), nullable=False)
+    report_id = Column(Integer, ForeignKey("report.id", ondelete="CASCADE"), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
 
     __table_args__ = (UniqueConstraint("report_id", name="uq_library_report_id"),)

@@ -55,6 +55,7 @@ async def upload_reports(
     files: List,
     experiment_id: Optional[int],
     class_id: int,
+    user_id: int,
 ) -> dict:
     """上传报告文件，保存并解析"""
     uploaded = []
@@ -87,6 +88,7 @@ async def upload_reports(
                 report = Report(
                     experiment_id=experiment_id if experiment_id else None,
                     class_id=class_id,
+                    user_id=user_id,
                     student_name=student_name,
                     student_id=student_id,
                     file_name=filename,
@@ -146,11 +148,14 @@ def get_reports(
     experiment_id: Optional[int] = None,
     class_id: Optional[int] = None,
     status: Optional[str] = None,
+    user_id: Optional[int] = None,
 ) -> List[dict]:
     """获取报告列表"""
     from app.models import CheckResultSummary
 
     q = db.query(Report)
+    if user_id:
+        q = q.filter(Report.user_id == user_id)
     if experiment_id:
         q = q.filter(Report.experiment_id == experiment_id)
     if class_id:
@@ -184,9 +189,9 @@ def get_reports(
     ]
 
 
-def delete_report(db: Session, report_id: int) -> bool:
+def delete_report(db: Session, report_id: int, user_id: int) -> bool:
     """删除实验报告，包含数据库记录、文件以及向量库数据"""
-    report = db.query(Report).filter(Report.id == report_id).first()
+    report = db.query(Report).filter(Report.id == report_id, Report.user_id == user_id).first()
     if not report:
         return False
 
@@ -239,9 +244,9 @@ def delete_report(db: Session, report_id: int) -> bool:
     return True
 
 
-def get_report(db: Session, report_id: int) -> Optional[dict]:
+def get_report(db: Session, report_id: int, user_id: int) -> Optional[dict]:
     """获取单个报告的元数据"""
-    r = db.query(Report).filter(Report.id == report_id).first()
+    r = db.query(Report).filter(Report.id == report_id, Report.user_id == user_id).first()
     if not r:
         return None
     return {

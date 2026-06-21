@@ -17,6 +17,7 @@ __pycache__/
 venv/
 env/
 .env
+.env.*
 
 # Database
 app.db
@@ -34,3 +35,9 @@ yarn-error.log*
 # OS Files
 .DS_Store
 Thumbs.db
+
+# Misc
+*.log
+*.bak
+*.tmp
+*.temp

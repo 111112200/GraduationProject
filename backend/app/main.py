@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 from app.core.database import init_db
-from app.api import reports, checks, library, course
+from app.api import reports, checks, library, course, auth
 
 origins = [
     "http://localhost:5173",
@@ -19,18 +19,27 @@ origins = [
 
 def seed_data():
     from app.core.database import SessionLocal
-    from app.models import Course, Clazz, Experiment
+    from app.models import Course, Clazz, Experiment, User
+    from app.core.security import get_password_hash
     db = SessionLocal()
     try:
+        user = db.query(User).filter(User.username == "admin").first()
+        if not user:
+            user = User(username="admin", hashed_password=get_password_hash("123456"))
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+            
         if db.query(Course).first():
             return
-        c = Course(name="软件工程", code="SE001")
+            
+        c = Course(name="软件工程", code="SE001", user_id=user.id)
         db.add(c)
         db.flush()
-        cl = Clazz(name="软件工程 21-1 班", grade="2021")
+        cl = Clazz(name="软件工程 21-1 班", grade="2021", user_id=user.id)
         db.add(cl)
         db.flush()
-        e = Experiment(course_id=c.id, title="实验一：需求分析", description="")
+        e = Experiment(course_id=c.id, title="实验一：需求分析", description="", user_id=user.id)
         db.add(e)
         db.commit()
     finally:
@@ -67,6 +76,7 @@ app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
 app.include_router(checks.router, prefix="/api/checks", tags=["checks"])
 app.include_router(library.router, prefix="/api/library", tags=["library"])
 app.include_router(course.router, prefix="/api/course", tags=["course"])
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 
 
 if __name__ == "__main__":

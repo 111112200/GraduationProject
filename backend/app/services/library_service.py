@@ -4,9 +4,9 @@ from app.models import Report, TextBlock, LibraryReport
 from app.services.vector_store_service import add_blocks_to_library, delete_report_from_library
 
 
-def add_to_library(db: Session, report_id: int) -> tuple[bool, str]:
+def add_to_library(db: Session, report_id: int, user_id: int) -> tuple[bool, str]:
     """将报告加入底库"""
-    report = db.query(Report).filter(Report.id == report_id).first()
+    report = db.query(Report).filter(Report.id == report_id, Report.user_id == user_id).first()
     if not report:
         return False, f"报告ID {report_id} 不存在"
     
@@ -31,9 +31,11 @@ def add_to_library(db: Session, report_id: int) -> tuple[bool, str]:
     return True, "成功加入底库"
 
 
-def remove_from_library(db: Session, report_id: int) -> bool:
+def remove_from_library(db: Session, report_id: int, user_id: int) -> bool:
     """从底库移除报告"""
-    lib = db.query(LibraryReport).filter(LibraryReport.report_id == report_id).first()
+    lib = db.query(LibraryReport).join(Report, LibraryReport.report_id == Report.id).filter(
+        LibraryReport.report_id == report_id, Report.user_id == user_id
+    ).first()
     if not lib:
         return False
     delete_report_from_library(report_id)
@@ -42,10 +44,12 @@ def remove_from_library(db: Session, report_id: int) -> bool:
     return True
 
 
-def get_library_reports(db: Session) -> list:
+def get_library_reports(db: Session, user_id: int) -> list:
     """获取底库报告列表"""
     from app.models import Report
-    items = db.query(LibraryReport, Report).join(Report, LibraryReport.report_id == Report.id).all()
+    items = db.query(LibraryReport, Report).join(Report, LibraryReport.report_id == Report.id).filter(
+        Report.user_id == user_id
+    ).all()
     return [
         {
             "reportId": r.id,
