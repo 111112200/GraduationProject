@@ -50,6 +50,13 @@ def _extract_student_info(filename: str) -> tuple:
     return student_name, student_id
 
 
+def _get_user_upload_dir(user_id: int) -> Path:
+    """获取用户专属上传目录"""
+    user_dir = UPLOAD_DIR / str(user_id)
+    user_dir.mkdir(parents=True, exist_ok=True)
+    return user_dir
+
+
 async def upload_reports(
     db: Session,
     files: List,
@@ -60,6 +67,9 @@ async def upload_reports(
     """上传报告文件，保存并解析"""
     uploaded = []
     errors = []
+
+    # 用户专属目录：uploads/{user_id}/
+    user_upload_dir = _get_user_upload_dir(user_id)
 
     for f in files:
         try:
@@ -75,7 +85,7 @@ async def upload_reports(
 
             student_name, student_id = _extract_student_info(filename)
             safe_name = f"{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{filename}"
-            file_path = UPLOAD_DIR / safe_name
+            file_path = user_upload_dir / safe_name
 
             file_bytes = await f.read()
             with open(file_path, "wb") as fp:

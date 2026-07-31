@@ -1,8 +1,8 @@
 # Custom project directories
-chroma_db/*
-!chroma_db/.gitkeep
-uploads/*
-!uploads/.gitkeep
+backend/chroma_db/*
+!backend/chroma_db/.gitkeep
+backend/uploads/*
+!backend/uploads/.gitkeep
 docs/
 .trae/
 

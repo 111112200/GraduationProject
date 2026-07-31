@@ -56,7 +56,18 @@ async def api_create_check(
     )
     db.add(task)
     db.flush()
-    reports = db.query(Report).filter(Report.id.in_(body.reportIds)).all()
+
+    # 校验所有报告必须属于当前用户
+    reports = db.query(Report).filter(
+        Report.id.in_(body.reportIds),
+        Report.user_id == current_user.id,
+    ).all()
+    if len(reports) != len(body.reportIds):
+        raise HTTPException(
+            status_code=400,
+            detail="部分报告不存在或不属于当前用户",
+        )
+
     for r in reports:
         task.reports.append(r)
     db.commit()

@@ -35,7 +35,11 @@ DEFAULT_SIMILAR_THRESHOLD = 0.5
 # 文本分块参数
 CHUNK_SIZE = 200
 CHUNK_OVERLAP = 80
+import secrets
+
 # ===== JWT Authentication =====
-SECRET_KEY = os.getenv("SECRET_KEY", "super-secret-graduation-project-key")
+# 优先从环境变量读取；若未设置则自动生成一个随机密钥（仅用于本地开发）。
+# 生产环境务必通过环境变量传入固定密钥，否则每次重启后旧 Token 会失效。
+SECRET_KEY = os.getenv("SECRET_KEY") or secrets.token_hex(32)
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
