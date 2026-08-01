@@ -9,7 +9,8 @@ class Report(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
-    experiment_id = Column(Integer, ForeignKey("experiment.id", ondelete="CASCADE"), nullable=False)
+    # 上传时前端不传实验，报告可先不关联实验（实验只关联查重任务）
+    experiment_id = Column(Integer, ForeignKey("experiment.id", ondelete="CASCADE"), nullable=True)
     class_id = Column(Integer, ForeignKey("clazz.id", ondelete="CASCADE"), nullable=False)
     student_name = Column(String(64), nullable=True)
     student_id = Column(String(64), index=True, nullable=True)
