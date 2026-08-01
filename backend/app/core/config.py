@@ -35,6 +35,9 @@ DEFAULT_SIMILAR_THRESHOLD = 0.5
 # 文本分块参数
 CHUNK_SIZE = 200
 CHUNK_OVERLAP = 80
+
+# 相似度检索返回的最多命中数
+TOP_K = 10
 import secrets
 
 # ===== JWT Authentication =====
