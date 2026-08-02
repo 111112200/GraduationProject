@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.schemas.check import CreateCheckTaskRequest
-from app.models import CheckTask, CheckResultSummary, CheckResultDetail, Report, User
+from app.models import CheckTask, CheckResultSummary, CheckResultDetail, Experiment, Report, User
 from app.api.deps import get_current_user
 
 router = APIRouter()
@@ -46,18 +46,17 @@ async def api_create_check(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    task = CheckTask(
-        user_id=current_user.id,
-        name=body.name,
-        experiment_id=body.experimentId,
-        mode=body.mode,
-        high_risk_threshold=body.highRiskThreshold,
-        similar_threshold=body.similarThreshold,
-    )
-    db.add(task)
-    db.flush()
+    experiment = db.query(Experiment).filter(
+        Experiment.id == body.experimentId,
+        Experiment.user_id == current_user.id,
+    ).first()
+    if not experiment:
+        raise HTTPException(
+            status_code=404,
+            detail="实验不存在或无权使用",
+        )
 
-    # 校验所有报告必须属于当前用户
+    # 校验所有报告必须属于当前用户，再创建任务，避免跨用户关联写入数据库。
     reports = db.query(Report).filter(
         Report.id.in_(body.reportIds),
         Report.user_id == current_user.id,
@@ -68,6 +67,15 @@ async def api_create_check(
             detail="部分报告不存在或不属于当前用户",
         )
 
+    task = CheckTask(
+        user_id=current_user.id,
+        name=body.name,
+        experiment_id=experiment.id,
+        mode=body.mode,
+        high_risk_threshold=body.highRiskThreshold,
+        similar_threshold=body.similarThreshold,
+    )
+    db.add(task)
     for r in reports:
         task.reports.append(r)
     db.commit()

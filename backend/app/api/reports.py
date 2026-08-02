@@ -5,7 +5,7 @@ from typing import List, Optional
 from app.core.database import get_db
 from app.services.report_service import upload_reports, get_reports, delete_report, get_report
 from app.services.chunk_service import calculate_report_chunks
-from app.models import Report, User
+from app.models import Clazz, Experiment, Report, User
 from app.api.deps import get_current_user
 
 router = APIRouter()
@@ -19,6 +19,21 @@ async def api_upload_reports(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    clazz = db.query(Clazz).filter(
+        Clazz.id == classId,
+        Clazz.user_id == current_user.id,
+    ).first()
+    if not clazz:
+        raise HTTPException(status_code=404, detail="班级不存在或无权使用")
+
+    if experimentId is not None:
+        experiment = db.query(Experiment).filter(
+            Experiment.id == experimentId,
+            Experiment.user_id == current_user.id,
+        ).first()
+        if not experiment:
+            raise HTTPException(status_code=404, detail="实验不存在或无权使用")
+
     result = await upload_reports(db, files, experimentId, classId, current_user.id)
     return result
 
