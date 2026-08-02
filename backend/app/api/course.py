@@ -40,6 +40,24 @@ async def api_create_course(body: CourseCreate, db: Session = Depends(get_db), c
     return {"id": c.id, "name": c.name}
 
 
+@router.delete("/courses/{course_id}")
+async def api_delete_course(course_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    course = db.query(Course).filter(Course.id == course_id, Course.user_id == current_user.id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="课程不存在")
+
+    experiment_count = db.query(Experiment).filter(
+        Experiment.course_id == course_id,
+        Experiment.user_id == current_user.id,
+    ).count()
+    if experiment_count > 0:
+        raise HTTPException(status_code=400, detail=f"该课程下仍有 {experiment_count} 个实验，无法删除")
+
+    db.delete(course)
+    db.commit()
+    return {"success": True}
+
+
 @router.get("/classes")
 async def api_get_classes(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     classes = db.query(Clazz).filter(Clazz.user_id == current_user.id).all()
@@ -75,7 +93,17 @@ async def api_delete_clazz(class_id: int, db: Session = Depends(get_db), current
 @router.get("/experiments")
 async def api_get_experiments(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     exps = db.query(Experiment).filter(Experiment.user_id == current_user.id).all()
-    return {"experiments": [{"id": e.id, "courseId": e.course_id, "title": e.title} for e in exps]}
+    return {
+        "experiments": [
+            {
+                "id": e.id,
+                "courseId": e.course_id,
+                "title": e.title,
+                "description": e.description,
+            }
+            for e in exps
+        ]
+    }
 
 
 @router.post("/experiments")

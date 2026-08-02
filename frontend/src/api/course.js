@@ -8,6 +8,10 @@ export function createCourse(name, code = '') {
   return post('/course/courses', { name, code })
 }
 
+export function deleteCourse(id) {
+  return del(`/course/courses/${id}`)
+}
+
 export function getClasses() {
   return get('/course/classes')
 }

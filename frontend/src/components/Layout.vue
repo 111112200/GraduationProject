@@ -27,6 +27,10 @@
           <span class="sidebar-icon">📚</span>
           <span class="sidebar-text">底库管理</span>
         </router-link>
+        <router-link to="/course-experiments" class="sidebar-link" active-class="active">
+          <span class="sidebar-icon">📘</span>
+          <span class="sidebar-text">课程与实验</span>
+        </router-link>
         <router-link to="/basic-data" class="sidebar-link" active-class="active">
           <span class="sidebar-icon">🗂️</span>
           <span class="sidebar-text">班级管理</span>
@@ -89,6 +93,7 @@ const pageTitleMap = {
   'check-create': '新建查重',
   'check-detail': '任务详情',
   'library': '底库管理',
+  'course-experiments': '课程与实验管理',
   'basic-data': '班级管理',
 }
 

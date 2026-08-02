@@ -9,6 +9,7 @@ import CheckCreate from '../views/CheckCreate.vue'
 import CheckDetail from '../views/CheckDetail.vue'
 import LibraryManage from '../views/LibraryManage.vue'
 import BasicDataManage from '../views/BasicDataManage.vue'
+import CourseExperimentManage from '../views/CourseExperimentManage.vue'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 
@@ -28,6 +29,7 @@ const routes = [
       { path: 'checks/create', name: 'check-create', component: CheckCreate },
       { path: 'checks/:id', name: 'check-detail', component: CheckDetail },
       { path: 'library', name: 'library', component: LibraryManage },
+      { path: 'course-experiments', name: 'course-experiments', component: CourseExperimentManage },
       { path: 'basic-data', name: 'basic-data', component: BasicDataManage },
     ],
   },

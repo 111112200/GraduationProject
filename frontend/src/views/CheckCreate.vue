@@ -9,6 +9,15 @@
       </div>
       <div class="form-grid">
         <div class="form-row">
+          <label>选择实验 <span class="required">*</span></label>
+          <select v-model="experimentId" class="g-select" @change="onExperimentChange">
+            <option :value="null" disabled>请选择实验</option>
+            <option v-for="experiment in experiments" :key="experiment.id" :value="experiment.id">
+              {{ experiment.title }}
+            </option>
+          </select>
+        </div>
+        <div class="form-row">
           <label>查重模式</label>
           <select v-model="mode" class="g-select">
             <option value="IN_CLASS">仅班级内部互查</option>
@@ -22,6 +31,19 @@
             <option :value="null">全部班级</option>
             <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.name }}{{ c.grade ? ` (${c.grade})` : '' }}</option>
           </select>
+        </div>
+      </div>
+      <p v-if="!experiments.length" class="setup-hint">
+        请先前往 <router-link to="/course-experiments">课程与实验管理</router-link> 创建实验。
+      </p>
+      <div class="form-grid threshold-grid">
+        <div class="form-row">
+          <label>高风险阈值</label>
+          <input v-model.number="highRiskThreshold" class="g-input" type="number" min="0" max="1" step="0.01" />
+        </div>
+        <div class="form-row">
+          <label>相似阈值</label>
+          <input v-model.number="similarThreshold" class="g-input" type="number" min="0" max="1" step="0.01" />
         </div>
       </div>
       <div class="form-row">
@@ -41,7 +63,7 @@
           </label>
         </div>
       </div>
-      <button @click="create" :disabled="creating" class="g-btn g-btn-primary" style="margin-top: 8px;">
+      <button @click="create" :disabled="creating || !experiments.length" class="g-btn g-btn-primary" style="margin-top: 8px;">
         {{ creating ? '创建中...' : '🚀 创建并开始查重' }}
       </button>
       <p v-if="msg" :class="msgClass" style="margin-top: 12px;">{{ msg }}</p>
@@ -65,14 +87,19 @@ const allReports = ref([])
 const name = ref('')
 const mode = ref('BOTH')
 const reportIds = ref([])
+const highRiskThreshold = ref(0.8)
+const similarThreshold = ref(0.5)
 const creating = ref(false)
 const msg = ref('')
 const msgClass = ref('')
 
 // 根据选中的班级过滤报告
 const filteredReports = computed(() => {
-  if (!selectedClassId.value) return allReports.value
-  return allReports.value.filter(r => r.classId === selectedClassId.value)
+  return allReports.value.filter((report) => {
+    const matchesClass = !selectedClassId.value || report.classId === selectedClassId.value
+    const matchesExperiment = !experimentId.value || !report.experimentId || report.experimentId === experimentId.value
+    return matchesClass && matchesExperiment
+  })
 })
 
 function selectAll() { reportIds.value = filteredReports.value.map(r => r.id) }
@@ -80,6 +107,11 @@ function selectNone() { reportIds.value = [] }
 
 function onClassChange() {
   // 切换班级时，清空已选报告并自动选择待检测的报告
+  const pending = filteredReports.value.filter(r => !r.hasCheckResult).map(r => r.id)
+  reportIds.value = pending.length > 0 ? pending : []
+}
+
+function onExperimentChange() {
   const pending = filteredReports.value.filter(r => !r.hasCheckResult).map(r => r.id)
   reportIds.value = pending.length > 0 ? pending : []
 }
@@ -92,7 +124,6 @@ async function loadClasses() {
 async function loadExperiments() {
   const res = await getExperiments()
   experiments.value = res.experiments || []
-  if (experiments.value.length && !experimentId.value) experimentId.value = experiments.value[0].id
 }
 
 async function loadReports() {
@@ -107,8 +138,21 @@ async function loadReports() {
 }
 
 async function create() {
-  if (!name.value.trim() || !reportIds.value.length) {
-    msg.value = '请填写任务名称并选择至少一份报告'
+  if (!name.value.trim() || !experimentId.value || !reportIds.value.length) {
+    msg.value = '请填写任务名称、选择实验并选择至少一份报告'
+    msgClass.value = 'g-msg-error'
+    return
+  }
+  if (
+    !Number.isFinite(highRiskThreshold.value) ||
+    !Number.isFinite(similarThreshold.value) ||
+    highRiskThreshold.value < 0 ||
+    highRiskThreshold.value > 1 ||
+    similarThreshold.value < 0 ||
+    similarThreshold.value > 1 ||
+    highRiskThreshold.value < similarThreshold.value
+  ) {
+    msg.value = '阈值必须在 0 到 1 之间，且高风险阈值不能低于相似阈值'
     msgClass.value = 'g-msg-error'
     return
   }
@@ -120,8 +164,8 @@ async function create() {
       experimentId: experimentId.value,
       mode: mode.value,
       reportIds: reportIds.value,
-      highRiskThreshold: 0.8,
-      similarThreshold: 0.5,
+      highRiskThreshold: highRiskThreshold.value,
+      similarThreshold: similarThreshold.value,
     })
     msg.value = '任务已创建，正在执行查重...'
     msgClass.value = 'g-msg-success'
@@ -154,6 +198,10 @@ onMounted(async () => {
   grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
+.threshold-grid { margin-top: -4px; }
+.required { color: var(--danger); }
+.setup-hint { margin: -6px 0 18px; color: var(--gray-500); font-size: 13px; }
+.setup-hint a { color: var(--primary); font-weight: 600; }
 .report-count { font-weight: 400; color: var(--gray-400); font-size: 13px; }
 .select-actions { display: flex; gap: 8px; margin-bottom: 10px; }
 

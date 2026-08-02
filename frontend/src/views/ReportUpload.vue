@@ -13,6 +13,15 @@
         </div>
       </div>
       <div class="form-row">
+        <label>关联实验 <span class="optional">（选填）</span></label>
+        <select v-model="experimentId" class="g-select">
+          <option :value="null">不关联实验</option>
+          <option v-for="experiment in experiments" :key="experiment.id" :value="experiment.id">
+            {{ experiment.title }}
+          </option>
+        </select>
+      </div>
+      <div class="form-row">
         <label>选择文件</label>
         <div
           class="drop-zone"
@@ -81,11 +90,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getClasses, createClass } from '../api/course'
+import { getClasses, getExperiments, createClass } from '../api/course'
 import { uploadReports } from '../api/reports'
 
 const classes = ref([])
 const classId = ref(null)
+const experiments = ref([])
+const experimentId = ref(null)
 const fileList = ref([])
 const fileInput = ref(null)
 const uploading = ref(false)
@@ -150,8 +161,9 @@ function formatSize(bytes) {
 }
 
 async function loadOptions() {
-  const res = await getClasses()
-  classes.value = res.classes || []
+  const [classResult, experimentResult] = await Promise.all([getClasses(), getExperiments()])
+  classes.value = classResult.classes || []
+  experiments.value = experimentResult.experiments || []
   if (classes.value.length && !classId.value) classId.value = classes.value[0].id
 }
 
@@ -164,7 +176,7 @@ async function upload() {
   uploading.value = true
   msg.value = ''
   try {
-    const res = await uploadReports(fileList.value, null, classId.value)
+    const res = await uploadReports(fileList.value, experimentId.value, classId.value)
     const ok = res.uploadedReports?.length || 0
     const err = res.errors?.length || 0
     msg.value = `上传成功 ${ok} 份${err ? `，失败 ${err} 份` : ''}`
@@ -223,6 +235,7 @@ onMounted(loadOptions)
 .required {
   color: var(--danger);
 }
+.optional { color: var(--gray-400); font-size: 12px; font-weight: 400; }
 .drop-icon { font-size: 36px; margin-bottom: 8px; }
 .drop-text { font-size: 15px; color: var(--gray-600); }
 .drop-text strong { color: var(--primary); }
