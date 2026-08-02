@@ -61,11 +61,16 @@ async def api_get_report_result(
     details = db.query(CheckResultDetail).filter(
         CheckResultDetail.summary_id == summary.id
     ).all()
+    target_report_ids = {d.target_report_id for d in details}
     target_reports = {}
-    for d in details:
-        if d.target_report_id not in target_reports:
-            tr = db.query(Report).filter(Report.id == d.target_report_id).first()
-            target_reports[d.target_report_id] = tr.student_name if tr else ""
+    if target_report_ids:
+        target_reports = {
+            r.id: r.student_name
+            for r in db.query(Report).filter(
+                Report.id.in_(target_report_ids),
+                Report.user_id == current_user.id,
+            ).all()
+        }
     segments = [
         {
             "sourceBlockId": d.source_block_id,
@@ -78,6 +83,7 @@ async def api_get_report_result(
             "mode": d.mode,
         }
         for d in details
+        if d.target_report_id in target_reports
     ]
     return {
         "reportId": report_id,

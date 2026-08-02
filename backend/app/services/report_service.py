@@ -217,7 +217,7 @@ def delete_report(db: Session, report_id: int, user_id: int) -> bool:
     # 2. 从底库中删除向量 (如果有)
     from app.services.vector_store_service import delete_report_from_library
     try:
-        delete_report_from_library(report_id)
+        delete_report_from_library(report_id, user_id)
     except Exception as e:
         print(f"Failed to delete vectors for report {report_id}: {e}")
 

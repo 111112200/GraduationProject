@@ -8,7 +8,6 @@ from app.models import Report, TextBlock, CheckTask, CheckResultSummary, CheckRe
 from app.services.embedding_service import embed_texts
 from app.services.vector_store_service import (
     add_blocks_to_task,
-    add_blocks_to_library,
     query_similar_task,
     query_similar_library,
     delete_task_collection,
@@ -68,6 +67,10 @@ def execute_check_task(db: Session, task_id: int):
 
     try:
         # 1. 构建任务临时索引（仅 IN_CLASS 或 BOTH 时需要）
+        if mode in ("HISTORY_ONLY", "BOTH"):
+            from app.services.library_service import ensure_user_library_index
+            ensure_user_library_index(db, task.user_id)
+
         if mode in ("IN_CLASS", "BOTH"):
             for report in task.reports:
                 blocks = [{"content": tb.content, "section_type": tb.section_type} for tb in report.text_blocks]
@@ -117,7 +120,7 @@ def execute_check_task(db: Session, task_id: int):
                 all_matches.extend(matches)
 
             if mode in ("HISTORY_ONLY", "BOTH"):
-                lib_matches = query_similar_library(vectors, TOP_K)
+                lib_matches = query_similar_library(vectors, task.user_id, TOP_K)
                 all_matches.extend(lib_matches)
 
             # 按相似度过滤并聚合

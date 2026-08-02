@@ -150,19 +150,25 @@ async def api_export_check_result(
         CheckResultDetail.summary_id.in_(summary_ids)
     ).order_by(CheckResultDetail.similarity.desc()).all()
 
-    # 按 summary_id 分组
-    detail_map = {}
     target_report_ids = set()
     for d in all_details:
-        detail_map.setdefault(d.summary_id, []).append(d)
         target_report_ids.add(d.target_report_id)
 
     # 批量查询 target 报告
     target_reports_map = {}
     if target_report_ids:
-        target_reports = db.query(Report).filter(Report.id.in_(target_report_ids)).all()
+        target_reports = db.query(Report).filter(
+            Report.id.in_(target_report_ids),
+            Report.user_id == current_user.id,
+        ).all()
         for tr in target_reports:
             target_reports_map[tr.id] = tr
+    all_details = [d for d in all_details if d.target_report_id in target_reports_map]
+
+    # 按 summary_id 分组，只保留当前用户有权访问的目标报告详情
+    detail_map = {}
+    for d in all_details:
+        detail_map.setdefault(d.summary_id, []).append(d)
 
     # ============ Sheet 1: 查重汇总 ============
     wb = openpyxl.Workbook()

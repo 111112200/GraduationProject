@@ -8,7 +8,7 @@ from app.services.embedding_service import embed_texts, embed_query
 
 # Chroma 集合名
 COLLECTION_TASK = "task"
-COLLECTION_LIBRARY = "library"
+COLLECTION_LIBRARY_PREFIX = "library_user"
 
 _chroma_client = None
 
@@ -26,6 +26,22 @@ def _get_collection(name: str):
         name=name,
         metadata={"hnsw:space": "cosine"},
     )
+
+
+def _library_collection_name(user_id: int) -> str:
+    """返回用户专属的长期底库集合名。"""
+    return f"{COLLECTION_LIBRARY_PREFIX}_{user_id}"
+
+
+def _get_library_collection(user_id: int):
+    return _get_collection(_library_collection_name(user_id))
+
+
+def _get_existing_library_collection(user_id: int):
+    try:
+        return _get_client().get_collection(_library_collection_name(user_id))
+    except Exception:
+        return None
 
 
 def add_blocks_to_task(blocks: List[dict], task_id: int):
@@ -47,8 +63,8 @@ def add_blocks_to_task(blocks: List[dict], task_id: int):
     coll.add(ids=ids, embeddings=vectors, metadatas=metadatas, documents=texts)
 
 
-def add_blocks_to_library(blocks: List[dict]):
-    """将文本块加入长期底库"""
+def add_blocks_to_library(blocks: List[dict], user_id: int):
+    """将文本块加入用户专属的长期底库。"""
     if not blocks:
         return
     texts = [b["content"] for b in blocks]
@@ -59,10 +75,11 @@ def add_blocks_to_library(blocks: List[dict]):
             "report_id": str(b["report_id"]),
             "block_id": str(b.get("block_id", "")),
             "section_type": (b.get("section_type") or "")[:64],
+            "user_id": str(user_id),
         }
         for b in blocks
     ]
-    coll = _get_collection(COLLECTION_LIBRARY)
+    coll = _get_library_collection(user_id)
     coll.add(ids=ids, embeddings=vectors, metadatas=metadatas, documents=texts)
 
 
@@ -118,10 +135,11 @@ def query_similar_task(
 
 def query_similar_library(
     query_vectors: List[List[float]],
+    user_id: int,
     top_k: int = 10,
 ) -> List[dict]:
-    """在底库索引中检索相似文本"""
-    coll = _get_collection(COLLECTION_LIBRARY)
+    """仅在当前用户的底库索引中检索相似文本。"""
+    coll = _get_library_collection(user_id)
     n = coll.count()
     if n == 0:
         return []
@@ -129,6 +147,7 @@ def query_similar_library(
     results = coll.query(
         query_embeddings=query_vectors,
         n_results=min(top_k, n),
+        where={"user_id": str(user_id)},
         include=["documents", "metadatas", "distances"],
     )
 
@@ -159,11 +178,31 @@ def delete_task_collection(task_id: int):
         pass
 
 
-def delete_report_from_library(report_id: int):
-    """从底库删除某报告的所有向量"""
-    coll = _get_collection(COLLECTION_LIBRARY)
+def is_report_indexed_in_library(report_id: int, user_id: int) -> bool:
+    """检查报告是否已经写入用户专属底库索引。"""
+    coll = _get_existing_library_collection(user_id)
+    if coll is None:
+        return False
     try:
-        items = coll.get(where={"report_id": str(report_id)}, include=[])
+        items = coll.get(
+            where={"report_id": str(report_id)},
+            include=[],
+        )
+    except Exception:
+        return False
+    return bool(items and items.get("ids"))
+
+
+def delete_report_from_library(report_id: int, user_id: int):
+    """从用户专属底库删除某报告的所有向量。"""
+    coll = _get_existing_library_collection(user_id)
+    if coll is None:
+        return
+    try:
+        items = coll.get(
+            where={"report_id": str(report_id)},
+            include=[],
+        )
     except Exception:
         items = {"ids": []}
     if items and items.get("ids"):
