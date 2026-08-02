@@ -29,6 +29,22 @@ export async function get(url) {
   return handleResponse(res)
 }
 
+export async function getBlob(url) {
+  const res = await fetch(BASE + url, {
+    headers: getHeaders()
+  })
+  if (res.status === 401) {
+    localStorage.removeItem('token')
+    window.location.href = '#/login'
+    throw new Error('未授权，请重新登录')
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data.detail || res.statusText)
+  }
+  return res.blob()
+}
+
 export async function post(url, body) {
   const res = await fetch(BASE + url, {
     method: 'POST',

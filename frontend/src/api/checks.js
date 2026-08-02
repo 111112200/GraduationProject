@@ -1,4 +1,4 @@
-import { get, post, del } from './http'
+import { get, post, del, getBlob } from './http'
 
 export function listChecks() {
   return get('/checks')
@@ -17,10 +17,5 @@ export function deleteCheckTask(taskId) {
 }
 
 export async function exportCheckExcel(taskId) {
-  const res = await fetch(`/api/checks/${taskId}/export`)
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.detail || '导出失败')
-  }
-  return res.blob()
+  return getBlob(`/checks/${taskId}/export`)
 }
