@@ -24,7 +24,7 @@ def _chunk_blocks(blocks: List[dict], report_id: int) -> List[dict]:
         length_function=len,
     )
     chunks = []
-    for i, b in enumerate(blocks):
+    for b in blocks:
         for chunk in splitter.split_text(b.get("content", "")):
             # 去除分块后可能遗留在开头的标点符号和空白字符
             chunk = chunk.lstrip("。！？\n\r\t ")
@@ -33,7 +33,7 @@ def _chunk_blocks(blocks: List[dict], report_id: int) -> List[dict]:
                     "report_id": report_id,
                     "section_type": b.get("section_type", ""),
                     "content": chunk,
-                    "block_id": i,
+                    "block_id": b.get("block_id"),
                 })
     return chunks
 
@@ -73,21 +73,29 @@ def execute_check_task(db: Session, task_id: int):
 
         if mode in ("IN_CLASS", "BOTH"):
             for report in task.reports:
-                blocks = [{"content": tb.content, "section_type": tb.section_type} for tb in report.text_blocks]
+                blocks = [
+                    {
+                        "content": tb.content,
+                        "section_type": tb.section_type,
+                        "block_id": tb.id,
+                    }
+                    for tb in report.text_blocks
+                ]
                 if not blocks:
                     continue
                 chunks = _chunk_blocks(blocks, report.id)
-                chunk_with_ids = []
-                for c in chunks:
-                    chunk_with_ids.append({
-                        **c,
-                        "block_id": c.get("block_id"),
-                    })
-                add_blocks_to_task(chunk_with_ids, task_id)
+                add_blocks_to_task(chunks, task_id)
 
         # 2. 对每份报告执行检索并聚合结果
         for report in task.reports:
-            blocks = [{"content": tb.content, "section_type": tb.section_type} for tb in report.text_blocks]
+            blocks = [
+                {
+                    "content": tb.content,
+                    "section_type": tb.section_type,
+                    "block_id": tb.id,
+                }
+                for tb in report.text_blocks
+            ]
             if not blocks:
                 summary = CheckResultSummary(
                     check_task_id=task_id,
@@ -144,9 +152,14 @@ def execute_check_task(db: Session, task_id: int):
             for m in valid_matches[:20]:
                 src_idx = m.get("source_index", 0)
                 src_text = texts[src_idx] if src_idx < len(texts) else (texts[0] if texts else "")
+                source_block_id = (
+                    chunks[src_idx].get("block_id")
+                    if 0 <= src_idx < len(chunks)
+                    else None
+                )
                 detail = CheckResultDetail(
                     summary_id=summary.id,
-                    source_block_id=None,
+                    source_block_id=source_block_id,
                     target_report_id=m["target_report_id"],
                     target_block_id=m.get("target_block_id"),
                     source_text=(src_text or "")[:2000],

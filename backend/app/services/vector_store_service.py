@@ -111,9 +111,11 @@ def query_similar_task(
         dists = results["distances"][i] if results["distances"] else []
         for doc, meta, dist in zip(docs, metas, dists):
             rid = int(meta.get("report_id", 0)) if meta.get("report_id") else None
+            block_id = meta.get("block_id")
+            block_id = int(block_id) if block_id not in (None, "") else None
             if rid and rid in exclude_report_ids:
                 continue
-            key = (i, meta.get("block_id"), rid)
+            key = (i, block_id, rid)
             if key in seen:
                 continue
             seen.add(key)
@@ -122,7 +124,7 @@ def query_similar_task(
                 "source_index": i,
                 "target_text": doc,
                 "target_report_id": rid or 0,
-                "target_block_id": meta.get("block_id"),
+                "target_block_id": block_id,
                 "similarity": round(similarity, 4),
                 "mode": "IN_CLASS",
             })
@@ -159,11 +161,13 @@ def query_similar_library(
         for doc, meta, dist in zip(docs, metas, dists):
             similarity = 1.0 - dist if dist <= 2 else 0
             rid = int(meta.get("report_id", 0)) if meta.get("report_id") else 0
+            block_id = meta.get("block_id")
+            block_id = int(block_id) if block_id not in (None, "") else None
             out.append({
                 "source_index": i,
                 "target_text": doc,
                 "target_report_id": rid,
-                "target_block_id": meta.get("block_id"),
+                "target_block_id": block_id,
                 "similarity": round(similarity, 4),
                 "mode": "HISTORY",
             })
