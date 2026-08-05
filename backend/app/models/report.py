@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Float
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Float, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
@@ -18,6 +18,8 @@ class Report(Base):
     file_path = Column(String(512), nullable=False)
     status = Column(String(32), default="UPLOADED")  # UPLOADED, PARSED, FAILED
     parse_error = Column(Text, nullable=True)
+    parse_warning = Column(Text, nullable=True)
+    parser_version = Column(String(32), nullable=True)
     parsed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
@@ -36,6 +38,13 @@ class TextBlock(Base):
     section_type = Column(String(64), nullable=False)  # DESIGN_IDEA, REFLECTION 等
     order_index = Column(Integer, default=0)
     content = Column(Text, nullable=False)
+    source_kind = Column(String(32), nullable=True)
+    source_index = Column(Integer, nullable=True)
+    source_location = Column(Text, nullable=True)
+    section_title = Column(String(256), nullable=True)
+    heading_level = Column(Integer, nullable=True)
+    is_fallback = Column(Boolean, nullable=False, default=False)
+    parser_version = Column(String(32), nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

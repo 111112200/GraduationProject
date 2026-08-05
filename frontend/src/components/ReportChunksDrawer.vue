@@ -45,15 +45,15 @@
           </div>
           <div class="stat-card">
             <div class="stat-value">{{ data.summary.chunk_size }}</div>
-            <div class="stat-label">Chunk Size</div>
+            <div class="stat-label">Chunk Size (Token)</div>
           </div>
           <div class="stat-card">
             <div class="stat-value">{{ data.summary.chunk_overlap }}</div>
-            <div class="stat-label">Chunk Overlap</div>
+            <div class="stat-label">Chunk Overlap (Token)</div>
           </div>
           <div class="stat-card">
             <div class="stat-value">{{ data.summary.block_count }}</div>
-            <div class="stat-label">原始段落数</div>
+            <div class="stat-label">文本块数</div>
           </div>
         </div>
 
@@ -90,7 +90,7 @@
                 <span class="chunk-section" v-if="chunk.section_type">{{ sectionLabel(chunk.section_type) }}</span>
               </div>
               <div class="chunk-meta-right">
-                <span class="chunk-length-badge">{{ chunk.length }} 字符</span>
+                <span class="chunk-length-badge">{{ chunk.length }} 字符 / {{ chunk.token_length }} token</span>
                 <button
                   class="chunk-expand-btn"
                   @click="toggleExpand(chunk.index)"
@@ -182,6 +182,7 @@ function sectionLabel(type) {
     DESIGN_IDEA: '设计思路',
     REFLECTION: '心得体会',
     CONCLUSION: '实验总结',
+    GENERAL: '全文回退',
     OTHER: '其他',
   }
   return map[type] || type

@@ -1,3 +1,4 @@
+import json
 import re
 from pathlib import Path
 from datetime import datetime
@@ -7,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import UPLOAD_DIR, ALLOWED_EXTENSIONS, MAX_FILE_SIZE_MB
 from app.models import Report, TextBlock, Course, Clazz, Experiment
-from app.services.docx_parser_service import parse_docx_report
+from app.services.docx_parser_service import PARSER_VERSION, parse_docx_report
 
 
 def _extract_student_info(filename: str) -> tuple:
@@ -117,13 +118,29 @@ async def upload_reports(
                             section_type=b["section_type"],
                             order_index=i,
                             content=b["content"],
+                            source_kind=b.get("source_kind"),
+                            source_index=b.get("source_index"),
+                            source_location=json.dumps(
+                                b.get("source_location") or {}, ensure_ascii=False
+                            ),
+                            section_title=b.get("section_title"),
+                            heading_level=b.get("heading_level"),
+                            is_fallback=bool(b.get("fallback", False)),
+                            parser_version=b.get("parser_version"),
                         )
                         db.add(tb)
                     report.status = "PARSED" if blocks else "PARSED_EMPTY"
+                    report.parser_version = blocks[0].get("parser_version") if blocks else None
+                    report.parse_warning = (
+                        "未识别到目标章节，已使用保守全文回退；建议人工确认提取范围。"
+                        if any(b.get("fallback") for b in blocks)
+                        else None
+                    )
                     report.parsed_at = datetime.utcnow()
                 except Exception as e:
                     report.status = "FAILED"
                     report.parse_error = str(e)[:500]
+                    report.parse_warning = None
 
                 savepoint.commit()
                 uploaded.append({
@@ -151,6 +168,55 @@ async def upload_reports(
         return {"success": False, "uploadedReports": [], "errors": [{"file": "batch", "error": f"数据库提交失败: {str(e)[:200]}"}]}
 
     return {"success": True, "uploadedReports": uploaded, "errors": errors}
+
+
+def reparse_report_if_needed(db: Session, report: Report) -> bool:
+    """Upgrade legacy extracted blocks before they enter a new index."""
+    if report.parser_version == PARSER_VERSION:
+        return True
+    if report.status == "FAILED" or not report.file_path:
+        return False
+
+    try:
+        blocks = parse_docx_report(report.file_path)
+    except Exception as exc:
+        report.parse_warning = f"新解析器升级失败，暂保留旧文本块：{str(exc)[:300]}"
+        return False
+
+    # Replace only after parsing succeeds, so a malformed file cannot erase the
+    # last usable extraction.
+    db.query(TextBlock).filter(TextBlock.report_id == report.id).delete(
+        synchronize_session=False
+    )
+    for index, block in enumerate(blocks):
+        db.add(
+            TextBlock(
+                report_id=report.id,
+                section_type=block["section_type"],
+                order_index=index,
+                content=block["content"],
+                source_kind=block.get("source_kind"),
+                source_index=block.get("source_index"),
+                source_location=json.dumps(
+                    block.get("source_location") or {}, ensure_ascii=False
+                ),
+                section_title=block.get("section_title"),
+                heading_level=block.get("heading_level"),
+                is_fallback=bool(block.get("fallback", False)),
+                parser_version=block.get("parser_version", PARSER_VERSION),
+            )
+        )
+    report.status = "PARSED" if blocks else "PARSED_EMPTY"
+    report.parser_version = PARSER_VERSION
+    report.parse_warning = (
+        "未识别到目标章节，已使用保守全文回退；建议人工确认提取范围。"
+        if any(block.get("fallback") for block in blocks)
+        else None
+    )
+    report.parse_error = None
+    report.parsed_at = datetime.utcnow()
+    db.flush()
+    return True
 
 
 def get_reports(
@@ -190,6 +256,8 @@ def get_reports(
             "studentId": r.student_id,
             "fileName": r.file_name,
             "status": r.status,
+            "parseWarning": r.parse_warning,
+            "parserVersion": r.parser_version,
             "hasCheckResult": r.id in checked_ids,
             "experimentId": r.experiment_id,
             "classId": r.class_id,
@@ -266,6 +334,8 @@ def get_report(db: Session, report_id: int, user_id: int) -> Optional[dict]:
         "fileName": r.file_name,
         "status": r.status,
         "parseError": r.parse_error,
+        "parseWarning": r.parse_warning,
+        "parserVersion": r.parser_version,
         "experimentId": r.experiment_id,
         "classId": r.class_id,
         "createdAt": r.created_at.isoformat() if r.created_at else None,

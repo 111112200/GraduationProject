@@ -57,6 +57,10 @@ class CheckResultDetail(Base):
     target_block_id = Column(Integer, ForeignKey("text_block.id", ondelete="CASCADE"), nullable=True)
     source_text = Column(Text, nullable=True)
     target_text = Column(Text, nullable=True)
+    source_start = Column(Integer, nullable=True)
+    source_end = Column(Integer, nullable=True)
+    target_start = Column(Integer, nullable=True)
+    target_end = Column(Integer, nullable=True)
     similarity = Column(Float, nullable=False)
     mode = Column(String(32), nullable=False)  # IN_CLASS, HISTORY
     created_at = Column(DateTime, server_default=func.now())

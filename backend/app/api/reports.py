@@ -89,10 +89,14 @@ async def api_get_report_result(
     segments = [
         {
             "sourceBlockId": d.source_block_id,
+            "sourceStart": getattr(d, "source_start", None),
+            "sourceEnd": getattr(d, "source_end", None),
             "sourceText": d.source_text,
             "targetReportId": d.target_report_id,
             "targetStudentName": target_reports.get(d.target_report_id, ""),
             "targetBlockId": d.target_block_id,
+            "targetStart": getattr(d, "target_start", None),
+            "targetEnd": getattr(d, "target_end", None),
             "targetText": d.target_text,
             "similarity": d.similarity,
             "mode": d.mode,
@@ -118,6 +122,12 @@ async def api_get_report_chunks(
     report = db.query(Report).filter(Report.id == report_id, Report.user_id == current_user.id).first()
     if not report:
         raise HTTPException(status_code=404, detail="报告不存在")
+
+    from app.services.docx_parser_service import PARSER_VERSION
+    from app.services.report_service import reparse_report_if_needed
+    was_current = report.parser_version == PARSER_VERSION
+    if reparse_report_if_needed(db, report) and not was_current:
+        db.commit()
         
     result = calculate_report_chunks(db, report_id)
     if result is None:

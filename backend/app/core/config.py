@@ -32,9 +32,12 @@ HEADING_SIMILARITY_THRESHOLD = 0.65
 DEFAULT_HIGH_RISK_THRESHOLD = 0.8
 DEFAULT_SIMILAR_THRESHOLD = 0.5
 
-# 文本分块参数
-CHUNK_SIZE = 200
-CHUNK_OVERLAP = 80
+# 文本分块参数。单位为 embedding tokenizer 的 token，而不是字符。
+# 当前 MiniLM sentence-transformer 的有效输入上限为 128 token，预留特殊
+# token 与少量模型实现差异后使用 96 token。
+CHUNK_SIZE = 96
+CHUNK_OVERLAP = 20
+CHUNK_VERSION = "v2"
 
 # 相似度检索返回的最多命中数
 TOP_K = 10
