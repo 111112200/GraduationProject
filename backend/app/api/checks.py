@@ -9,6 +9,7 @@ from app.core.database import get_db
 from app.schemas.check import CreateCheckTaskRequest
 from app.models import CheckTask, CheckResultSummary, CheckResultDetail, Experiment, Report, User
 from app.api.deps import get_current_user
+from app.services.check_validation import validate_check_reports
 
 router = APIRouter()
 
@@ -66,6 +67,10 @@ async def api_create_check(
             status_code=400,
             detail="部分报告不存在或不属于当前用户",
         )
+    try:
+        validate_check_reports(reports, experiment.id, body.mode)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     task = CheckTask(
         user_id=current_user.id,
