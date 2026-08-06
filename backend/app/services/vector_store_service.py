@@ -115,7 +115,7 @@ def _query_collection(
     exclude_report_ids: Optional[set] = None,
     where: Optional[dict] = None,
 ) -> List[dict]:
-    if not query_vectors or coll.count() == 0:
+    if not query_vectors or top_k <= 0 or coll.count() == 0:
         return []
     exclude_report_ids = exclude_report_ids or set()
     n_results = min(max(top_k * 2, top_k), 50)
@@ -159,7 +159,17 @@ def _query_collection(
                     "mode": mode,
                 }
             )
-    return out
+    out.sort(
+        key=lambda match: (
+            -match["similarity"],
+            match["source_index"],
+            match["target_report_id"],
+            match["target_block_id"] or -1,
+            match["target_start"] if match["target_start"] is not None else -1,
+            match["target_end"] if match["target_end"] is not None else -1,
+        )
+    )
+    return out[:top_k]
 
 
 def query_similar_task(
@@ -168,7 +178,7 @@ def query_similar_task(
     top_k: int = 10,
     exclude_report_ids: Optional[set] = None,
 ) -> List[dict]:
-    """Query up to ``top_k`` candidates for every source chunk."""
+    """Return the globally highest-ranked task matches across source chunks."""
     coll = _get_existing_collection(f"{COLLECTION_TASK}_{task_id}")
     if coll is None:
         return []
@@ -181,7 +191,7 @@ def query_similar_library(
     top_k: int = 10,
     exclude_report_ids: Optional[set] = None,
 ) -> List[dict]:
-    """Query the user's versioned chunk index for every source chunk."""
+    """Return the globally highest-ranked library matches across source chunks."""
     coll = _get_existing_library_collection(user_id)
     if coll is None:
         return []
