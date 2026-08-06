@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -15,6 +16,34 @@ origins = [
     "http://localhost:8080",
     "http://127.0.0.1:8080",
 ]
+
+
+async def _start_recovery_tasks(app: FastAPI):
+    from app.api.checks import run_check_task
+    from app.core.database import SessionLocal
+    from app.services.check_task_recovery import recover_stale_check_tasks
+
+    db = SessionLocal()
+    try:
+        task_ids = recover_stale_check_tasks(db)
+    finally:
+        db.close()
+
+    recovery_tasks = getattr(app.state, "recovery_tasks", set())
+    app.state.recovery_tasks = recovery_tasks
+
+    def _finish(task: asyncio.Task):
+        recovery_tasks.discard(task)
+        if task.cancelled():
+            return
+        error = task.exception()
+        if error:
+            print(f"[CheckTask] recovery task failed: {error}")
+
+    for task_id in task_ids:
+        task = asyncio.create_task(asyncio.to_thread(run_check_task, task_id))
+        recovery_tasks.add(task)
+        task.add_done_callback(_finish)
 
 
 def seed_data():
@@ -53,6 +82,8 @@ async def lifespan(app: FastAPI):
     # 预加载 embedding 模型，避免在后台线程中首次加载时出现网络问题
     from app.services.embedding_service import preload_model
     preload_model()
+    app.state.recovery_tasks = set()
+    await _start_recovery_tasks(app)
     yield
 
 

@@ -136,8 +136,20 @@ def execute_check_task(db: Session, task_id: int):
     if not task or task.status != "PENDING":
         return
 
-    task.status = "RUNNING"
+    claimed = db.query(CheckTask).filter(
+        CheckTask.id == task_id,
+        CheckTask.status == "PENDING",
+    ).update(
+        {CheckTask.status: "RUNNING"},
+        synchronize_session=False,
+    )
+    if claimed != 1:
+        db.rollback()
+        return
     db.commit()
+    task = db.get(CheckTask, task_id)
+    if not task:
+        return
 
     report_ids = [r.id for r in task.reports]
     if not report_ids:
