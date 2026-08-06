@@ -56,7 +56,7 @@ async def api_get_report_result(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    from app.models import CheckResultSummary, CheckResultDetail, Report
+    from app.models import CheckResultSummary, CheckResultDetail, CheckTask, Report
     
     # Verify report belongs to user
     report = db.query(Report).filter(Report.id == report_id, Report.user_id == current_user.id).first()
@@ -64,6 +64,10 @@ async def api_get_report_result(
         raise HTTPException(status_code=404, detail="报告不存在")
     summary = db.query(CheckResultSummary).filter(
         CheckResultSummary.report_id == report_id
+    ).join(
+        CheckTask, CheckTask.id == CheckResultSummary.check_task_id
+    ).filter(
+        CheckTask.status == "COMPLETED"
     ).order_by(CheckResultSummary.created_at.desc()).first()
     if not summary:
         return {

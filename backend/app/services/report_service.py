@@ -227,7 +227,7 @@ def get_reports(
     user_id: Optional[int] = None,
 ) -> List[dict]:
     """获取报告列表"""
-    from app.models import CheckResultSummary
+    from app.models import CheckResultSummary, CheckTask
 
     q = db.query(Report)
     if user_id:
@@ -244,8 +244,11 @@ def get_reports(
     report_ids = [r.id for r in reports]
     checked_ids = set()
     if report_ids:
-        checked_rows = db.query(CheckResultSummary.report_id).filter(
-            CheckResultSummary.report_id.in_(report_ids)
+        checked_rows = db.query(CheckResultSummary.report_id).join(
+            CheckTask, CheckTask.id == CheckResultSummary.check_task_id
+        ).filter(
+            CheckResultSummary.report_id.in_(report_ids),
+            CheckTask.status == "COMPLETED",
         ).distinct().all()
         checked_ids = {row[0] for row in checked_rows}
 

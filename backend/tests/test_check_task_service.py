@@ -195,6 +195,40 @@ class CheckTaskBlockIdTest(unittest.TestCase):
             [{self.source_report_id}, {self.target_report_id}],
         )
 
+    def test_failure_rolls_back_partial_results(self):
+        embed_calls = 0
+
+        def fake_embed_texts(texts):
+            nonlocal embed_calls
+            embed_calls += 1
+            if embed_calls == 2:
+                raise RuntimeError("embedding failed")
+            return [[0.0] for _ in texts]
+
+        with patch(
+            "app.services.report_service.reparse_report_if_needed",
+            return_value=True,
+        ), patch(
+            "app.services.check_task_service.embed_texts",
+            side_effect=fake_embed_texts,
+        ), patch(
+            "app.services.check_task_service.add_blocks_to_task",
+        ), patch(
+            "app.services.check_task_service.query_similar_task",
+            return_value=[],
+        ), patch(
+            "app.services.check_task_service.delete_task_collection",
+        ):
+            with self.assertRaises(RuntimeError):
+                execute_check_task(self.db, self.task_id)
+
+        task = self.db.get(CheckTask, self.task_id)
+        self.assertEqual(task.status, "FAILED")
+        self.assertEqual(self.db.query(CheckResultDetail).count(), 0)
+        from app.models import CheckResultSummary
+
+        self.assertEqual(self.db.query(CheckResultSummary).count(), 0)
+
 
 if __name__ == "__main__":
     unittest.main()

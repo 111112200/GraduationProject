@@ -106,9 +106,11 @@ async def api_export_check_result(
         raise HTTPException(400, "任务尚未完成，无法导出")
 
     # 查询所有 summary + report 信息
-    summaries = db.query(CheckResultSummary, Report).join(
-        Report, CheckResultSummary.report_id == Report.id
-    ).filter(CheckResultSummary.check_task_id == task_id).all()
+    summaries = []
+    if task.status == "COMPLETED":
+        summaries = db.query(CheckResultSummary, Report).join(
+            Report, CheckResultSummary.report_id == Report.id
+        ).filter(CheckResultSummary.check_task_id == task_id).all()
 
     if not summaries:
         raise HTTPException(400, "暂无查重数据可导出")

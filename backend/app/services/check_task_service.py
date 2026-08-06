@@ -261,9 +261,12 @@ def execute_check_task(db: Session, task_id: int):
 
         task.status = "COMPLETED"
         delete_task_collection(task_id)
-    except Exception as e:
-        task.status = "FAILED"
-        delete_task_collection(task_id)
-        raise
-    finally:
         db.commit()
+    except Exception:
+        delete_task_collection(task_id)
+        db.rollback()
+        failed_task = db.query(CheckTask).filter(CheckTask.id == task_id).first()
+        if failed_task:
+            failed_task.status = "FAILED"
+            db.commit()
+        raise
