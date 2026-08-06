@@ -57,6 +57,21 @@ def _as_int(value):
         return None
 
 
+def _with_excluded_reports(where: Optional[dict], exclude_report_ids: set) -> Optional[dict]:
+    """Apply report exclusions inside Chroma before nearest-neighbor truncation."""
+    if not exclude_report_ids:
+        return where
+
+    exclusion = {
+        "report_id": {
+            "$nin": [str(report_id) for report_id in sorted(exclude_report_ids)],
+        }
+    }
+    if not where:
+        return exclusion
+    return {"$and": [where, exclusion]}
+
+
 def _metadata_for_chunk(chunk: dict, user_id: Optional[int] = None) -> dict:
     metadata = {
         "report_id": str(chunk.get("report_id") or ""),
@@ -125,8 +140,9 @@ def _query_collection(
         "n_results": min(n_results, coll.count()),
         "include": ["documents", "metadatas", "distances"],
     }
-    if where:
-        query_kwargs["where"] = where
+    query_where = _with_excluded_reports(where, exclude_report_ids)
+    if query_where:
+        query_kwargs["where"] = query_where
     results = coll.query(**query_kwargs)
 
     out = []

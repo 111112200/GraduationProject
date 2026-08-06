@@ -87,6 +87,34 @@ class VectorStoreGlobalTopKTest(unittest.TestCase):
             )
 
         self.assertEqual([match["target_report_id"] for match in matches], [11, 10])
+        self.assertEqual(
+            collection.query_kwargs["where"],
+            {
+                "$and": [
+                    {"user_id": "7"},
+                    {"report_id": {"$nin": ["40", "41"]}},
+                ]
+            },
+        )
+
+    def test_task_query_excludes_current_report_before_search(self):
+        collection = FakeCollection()
+        with patch(
+            "app.services.vector_store_service._get_existing_collection",
+            return_value=collection,
+        ):
+            matches = query_similar_task(
+                query_vectors=[[0.0], [1.0]],
+                task_id=1,
+                top_k=4,
+                exclude_report_ids={40, 41},
+            )
+
+        self.assertEqual([match["target_report_id"] for match in matches], [11, 10])
+        self.assertEqual(
+            collection.query_kwargs["where"],
+            {"report_id": {"$nin": ["40", "41"]}},
+        )
 
     def test_task_query_can_keep_best_match_for_each_source(self):
         collection = FakeCollection()
