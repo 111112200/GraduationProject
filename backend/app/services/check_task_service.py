@@ -199,7 +199,15 @@ def execute_check_task(db: Session, task_id: int):
             all_matches = []
 
             if mode in ("IN_CLASS", "BOTH"):
-                matches = query_similar_task(vectors, task_id, TOP_K, exclude_report_ids=exclude_self)
+                # Overall score measures source-text coverage, so every source
+                # chunk needs its best candidate instead of one global Top-K.
+                matches = query_similar_task(
+                    vectors,
+                    task_id,
+                    TOP_K,
+                    exclude_report_ids=exclude_self,
+                    per_source_limit=1,
+                )
                 all_matches.extend(matches)
 
             if mode in ("HISTORY_ONLY", "BOTH"):
@@ -208,6 +216,7 @@ def execute_check_task(db: Session, task_id: int):
                     task.user_id,
                     TOP_K,
                     exclude_report_ids=exclude_self,
+                    per_source_limit=1,
                 )
                 all_matches.extend(lib_matches)
 

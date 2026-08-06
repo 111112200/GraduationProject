@@ -114,6 +114,7 @@ class CheckTaskBlockIdTest(unittest.TestCase):
             task_id,
             top_k,
             exclude_report_ids=None,
+            per_source_limit=None,
         ):
             if self.target_report_id in (exclude_report_ids or set()):
                 return []
@@ -154,6 +155,45 @@ class CheckTaskBlockIdTest(unittest.TestCase):
         self.assertEqual(detail.source_block_id, self.source_block_id)
         self.assertEqual(detail.target_block_id, self.target_block_id)
         self.assertNotEqual(detail.target_block_id, 0)
+
+    def test_history_query_excludes_the_report_being_checked(self):
+        task = self.db.get(CheckTask, self.task_id)
+        task.mode = "HISTORY_ONLY"
+        self.db.commit()
+        exclusions = []
+
+        def fake_embed_texts(texts):
+            return [[0.0] for _ in texts]
+
+        def fake_query_similar_library(
+            query_vectors,
+            user_id,
+            top_k,
+            exclude_report_ids=None,
+            per_source_limit=None,
+        ):
+            exclusions.append(set(exclude_report_ids or set()))
+            return []
+
+        with patch(
+            "app.services.report_service.reparse_report_if_needed",
+        ), patch(
+            "app.services.library_service.ensure_user_library_index",
+        ), patch(
+            "app.services.check_task_service.embed_texts",
+            side_effect=fake_embed_texts,
+        ), patch(
+            "app.services.check_task_service.query_similar_library",
+            side_effect=fake_query_similar_library,
+        ), patch(
+            "app.services.check_task_service.delete_task_collection",
+        ):
+            execute_check_task(self.db, self.task_id)
+
+        self.assertEqual(
+            exclusions,
+            [{self.source_report_id}, {self.target_report_id}],
+        )
 
 
 if __name__ == "__main__":

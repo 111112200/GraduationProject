@@ -114,6 +114,7 @@ def _query_collection(
     mode: str,
     exclude_report_ids: Optional[set] = None,
     where: Optional[dict] = None,
+    per_source_limit: Optional[int] = None,
 ) -> List[dict]:
     if not query_vectors or top_k <= 0 or coll.count() == 0:
         return []
@@ -169,6 +170,17 @@ def _query_collection(
             match["target_end"] if match["target_end"] is not None else -1,
         )
     )
+    if per_source_limit is not None:
+        selected = []
+        selected_counts = {}
+        for match in out:
+            source_index = match["source_index"]
+            count = selected_counts.get(source_index, 0)
+            if count >= per_source_limit:
+                continue
+            selected.append(match)
+            selected_counts[source_index] = count + 1
+        return selected
     return out[:top_k]
 
 
@@ -177,12 +189,20 @@ def query_similar_task(
     task_id: int,
     top_k: int = 10,
     exclude_report_ids: Optional[set] = None,
+    per_source_limit: Optional[int] = None,
 ) -> List[dict]:
-    """Return the globally highest-ranked task matches across source chunks."""
+    """Return task matches, optionally capped separately for each source chunk."""
     coll = _get_existing_collection(f"{COLLECTION_TASK}_{task_id}")
     if coll is None:
         return []
-    return _query_collection(coll, query_vectors, top_k, "IN_CLASS", exclude_report_ids)
+    return _query_collection(
+        coll,
+        query_vectors,
+        top_k,
+        "IN_CLASS",
+        exclude_report_ids,
+        per_source_limit=per_source_limit,
+    )
 
 
 def query_similar_library(
@@ -190,8 +210,9 @@ def query_similar_library(
     user_id: int,
     top_k: int = 10,
     exclude_report_ids: Optional[set] = None,
+    per_source_limit: Optional[int] = None,
 ) -> List[dict]:
-    """Return the globally highest-ranked library matches across source chunks."""
+    """Return library matches, optionally capped separately for each source chunk."""
     coll = _get_existing_library_collection(user_id)
     if coll is None:
         return []
@@ -202,6 +223,7 @@ def query_similar_library(
         "HISTORY",
         exclude_report_ids=exclude_report_ids,
         where={"user_id": str(user_id)},
+        per_source_limit=per_source_limit,
     )
 
 

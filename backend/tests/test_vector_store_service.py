@@ -73,6 +73,37 @@ class VectorStoreGlobalTopKTest(unittest.TestCase):
         self.assert_global_top_k(matches)
         self.assertEqual(collection.query_kwargs["where"], {"user_id": "7"})
 
+    def test_library_query_excludes_current_report(self):
+        collection = FakeCollection()
+        with patch(
+            "app.services.vector_store_service._get_existing_library_collection",
+            return_value=collection,
+        ):
+            matches = query_similar_library(
+                query_vectors=[[0.0], [1.0]],
+                user_id=7,
+                top_k=4,
+                exclude_report_ids={40, 41},
+            )
+
+        self.assertEqual([match["target_report_id"] for match in matches], [11, 10])
+
+    def test_task_query_can_keep_best_match_for_each_source(self):
+        collection = FakeCollection()
+        with patch(
+            "app.services.vector_store_service._get_existing_collection",
+            return_value=collection,
+        ):
+            matches = query_similar_task(
+                query_vectors=[[0.0], [1.0]],
+                task_id=1,
+                top_k=1,
+                per_source_limit=1,
+            )
+
+        self.assertEqual([match["source_index"] for match in matches], [1, 0])
+        self.assertEqual([match["similarity"] for match in matches], [0.95, 0.8])
+
 
 if __name__ == "__main__":
     unittest.main()
