@@ -1,11 +1,11 @@
 from pydantic import BaseModel, Field, model_validator
-from typing import List
+from typing import List, Literal
 
 
 class CreateCheckTaskRequest(BaseModel):
     name: str
     experimentId: int
-    mode: str = "BOTH"  # IN_CLASS, HISTORY_ONLY, BOTH
+    mode: Literal["IN_CLASS", "HISTORY_ONLY", "BOTH"] = "BOTH"
     reportIds: List[int] = Field(min_length=1)
     highRiskThreshold: float = Field(default=0.8, ge=0, le=1)
     similarThreshold: float = Field(default=0.5, ge=0, le=1)
