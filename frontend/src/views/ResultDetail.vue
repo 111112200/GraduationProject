@@ -196,6 +196,7 @@ const report = ref({})
 const loading = ref(true)
 const inLibrary = ref(false)
 const activeFilter = ref('ALL')
+const taskId = computed(() => Number(route.query.taskId) || null)
 
 const inClassSegments = computed(() =>
   (result.value.segments || []).filter(segment => segment.mode === 'IN_CLASS')
@@ -234,7 +235,9 @@ async function load() {
   try {
     const [reportMeta, checkResult, library] = await Promise.all([
       getReport(route.params.reportId),
-      getReportResult(route.params.reportId),
+      taskId.value
+        ? getReportResult(route.params.reportId, taskId.value)
+        : Promise.resolve({ hasCheckResult: false, segments: [] }),
       getLibraryReports(),
     ])
     report.value = reportMeta

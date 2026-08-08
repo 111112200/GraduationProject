@@ -17,8 +17,8 @@ export function getReport(reportId) {
   return get(`/reports/${reportId}`)
 }
 
-export function getReportResult(reportId) {
-  return get(`/reports/${reportId}/result`)
+export function getReportResult(reportId, taskId) {
+  return get(`/reports/${reportId}/result?taskId=${encodeURIComponent(taskId)}`)
 }
 
 export function deleteReport(reportId) {

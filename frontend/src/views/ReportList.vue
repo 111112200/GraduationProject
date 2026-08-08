@@ -33,7 +33,12 @@
               </span>
             </td>
             <td class="action-col">
-              <router-link :to="`/reports/${r.id}/result`" class="action-link">查看结果</router-link>
+              <router-link
+                v-if="r.latestCheckTaskId"
+                :to="{ path: `/reports/${r.id}/result`, query: { taskId: r.latestCheckTaskId } }"
+                class="action-link"
+              >查看结果</router-link>
+              <span v-else class="action-link action-link-disabled">暂无结果</span>
               <button @click="openChunks(r)" class="action-btn-info">查看分块</button>
               <button @click="handleDelete(r.id)" class="action-btn-danger">删除</button>
             </td>
@@ -233,6 +238,12 @@ onMounted(loadOptions)
 .action-btn-info:hover {
   color: #fff;
   background: var(--primary);
+}
+.action-link-disabled,
+.action-link-disabled:hover {
+  color: var(--gray-400);
+  background: transparent;
+  cursor: default;
 }
 
 .action-col { gap: 6px; }

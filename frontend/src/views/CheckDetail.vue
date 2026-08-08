@@ -60,7 +60,7 @@
               </span>
             </td>
             <td>
-              <router-link :to="`/reports/${r.reportId}/result`" class="g-btn g-btn-primary" style="padding: 5px 14px; font-size: 12px;">
+              <router-link :to="{ path: `/reports/${r.reportId}/result`, query: { taskId: task.taskId } }" class="g-btn g-btn-primary" style="padding: 5px 14px; font-size: 12px;">
                 查看详情
               </router-link>
             </td>

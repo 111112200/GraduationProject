@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -53,6 +53,7 @@ async def api_get_reports(
 @router.get("/{report_id}/result")
 async def api_get_report_result(
     report_id: int,
+    taskId: int = Query(..., gt=0),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -62,13 +63,21 @@ async def api_get_report_result(
     report = db.query(Report).filter(Report.id == report_id, Report.user_id == current_user.id).first()
     if not report:
         raise HTTPException(status_code=404, detail="报告不存在")
+    task = db.query(CheckTask).filter(
+        CheckTask.id == taskId,
+        CheckTask.user_id == current_user.id,
+    ).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="任务不存在")
+
     summary = db.query(CheckResultSummary).filter(
-        CheckResultSummary.report_id == report_id
+        CheckResultSummary.report_id == report_id,
+        CheckResultSummary.check_task_id == task.id,
     ).join(
-        CheckTask, CheckTask.id == CheckResultSummary.check_task_id
+        CheckTask, CheckTask.id == CheckResultSummary.check_task_id,
     ).filter(
         CheckTask.status == "COMPLETED"
-    ).order_by(CheckResultSummary.created_at.desc()).first()
+    ).first()
     if not summary:
         return {
             "reportId": report_id,

@@ -256,7 +256,7 @@ def get_reports(
     from app.models import CheckResultSummary, CheckTask
 
     q = db.query(Report)
-    if user_id:
+    if user_id is not None:
         q = q.filter(Report.user_id == user_id)
     if experiment_id:
         q = q.filter(Report.experiment_id == experiment_id)
@@ -269,14 +269,29 @@ def get_reports(
     # 批量查询所有已查重的报告 ID
     report_ids = [r.id for r in reports]
     checked_ids = set()
+    latest_check_task_ids = {}
     if report_ids:
-        checked_rows = db.query(CheckResultSummary.report_id).join(
+        checked_query = db.query(
+            CheckResultSummary.report_id,
+            CheckResultSummary.check_task_id,
+            CheckResultSummary.created_at,
+            CheckResultSummary.id,
+        ).join(
             CheckTask, CheckTask.id == CheckResultSummary.check_task_id
         ).filter(
             CheckResultSummary.report_id.in_(report_ids),
             CheckTask.status == "COMPLETED",
-        ).distinct().all()
-        checked_ids = {row[0] for row in checked_rows}
+        )
+        if user_id is not None:
+            checked_query = checked_query.filter(CheckTask.user_id == user_id)
+        checked_rows = checked_query.order_by(
+            CheckResultSummary.report_id,
+            CheckResultSummary.created_at.desc(),
+            CheckResultSummary.id.desc(),
+        ).all()
+        checked_ids = {report_id for report_id, _, _, _ in checked_rows}
+        for report_id, task_id, _, _ in checked_rows:
+            latest_check_task_ids.setdefault(report_id, task_id)
 
     return [
         {
@@ -288,6 +303,7 @@ def get_reports(
             "parseWarning": r.parse_warning,
             "parserVersion": r.parser_version,
             "hasCheckResult": r.id in checked_ids,
+            "latestCheckTaskId": latest_check_task_ids.get(r.id),
             "experimentId": r.experiment_id,
             "classId": r.class_id,
             "createdAt": r.created_at.isoformat() if r.created_at else None,
