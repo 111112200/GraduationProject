@@ -151,6 +151,10 @@ def execute_check_task(db: Session, task_id: int):
     if not task:
         return
 
+    # A process can stop after indexing but before the finally-style cleanup.
+    # Rebuilding from an empty task collection keeps recovery idempotent.
+    delete_task_collection(task_id)
+
     report_ids = [r.id for r in task.reports]
     if not report_ids:
         task.status = "COMPLETED"

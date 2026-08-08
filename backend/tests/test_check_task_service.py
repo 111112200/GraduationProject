@@ -195,6 +195,44 @@ class CheckTaskBlockIdTest(unittest.TestCase):
             [{self.source_report_id}, {self.target_report_id}],
         )
 
+    def test_retry_clears_task_collection_before_rebuilding_index(self):
+        calls = []
+
+        def fake_embed_texts(texts):
+            return [[0.0] for _ in texts]
+
+        def fake_delete_task_collection(task_id):
+            calls.append(("delete", task_id))
+
+        def fake_add_blocks_to_task(blocks, task_id):
+            calls.append(("add", task_id))
+            self.assertEqual(calls[0], ("delete", self.task_id))
+
+        with patch(
+            "app.services.report_service.reparse_report_if_needed",
+            return_value=True,
+        ), patch(
+            "app.services.check_task_service.embed_texts",
+            side_effect=fake_embed_texts,
+        ), patch(
+            "app.services.check_task_service.add_blocks_to_task",
+            side_effect=fake_add_blocks_to_task,
+        ), patch(
+            "app.services.check_task_service.query_similar_task",
+            return_value=[],
+        ), patch(
+            "app.services.check_task_service.delete_task_collection",
+            side_effect=fake_delete_task_collection,
+        ):
+            execute_check_task(self.db, self.task_id)
+
+        self.assertEqual(calls[0], ("delete", self.task_id))
+        self.assertEqual(calls[-1], ("delete", self.task_id))
+        self.assertEqual(
+            self.db.get(CheckTask, self.task_id).status,
+            "COMPLETED",
+        )
+
     def test_failure_rolls_back_partial_results(self):
         embed_calls = 0
 
