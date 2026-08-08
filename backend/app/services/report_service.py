@@ -7,7 +7,7 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from app.core.config import UPLOAD_DIR, ALLOWED_EXTENSIONS, MAX_FILE_SIZE_MB
-from app.models import Report, TextBlock, Course, Clazz, Experiment
+from app.models import CheckResultDetail, Report, TextBlock, Course, Clazz, Experiment
 from app.services.docx_parser_service import PARSER_VERSION, parse_docx_report
 
 
@@ -208,6 +208,22 @@ def reparse_report_if_needed(db: Session, report: Report) -> bool:
     except Exception as exc:
         report.parse_warning = f"新解析器升级失败，暂保留旧文本块：{str(exc)[:300]}"
         return False
+
+    # Preserve historical evidence before deleting old blocks. Both foreign keys
+    # are nullable and the copied texts/offsets remain sufficient for result UI.
+    old_block_ids = db.query(TextBlock.id).filter(TextBlock.report_id == report.id)
+    db.query(CheckResultDetail).filter(
+        CheckResultDetail.source_block_id.in_(old_block_ids)
+    ).update(
+        {CheckResultDetail.source_block_id: None},
+        synchronize_session=False,
+    )
+    db.query(CheckResultDetail).filter(
+        CheckResultDetail.target_block_id.in_(old_block_ids)
+    ).update(
+        {CheckResultDetail.target_block_id: None},
+        synchronize_session=False,
+    )
 
     # Replace only after parsing succeeds, so a malformed file cannot erase the
     # last usable extraction.
