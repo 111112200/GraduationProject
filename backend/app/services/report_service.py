@@ -58,6 +58,34 @@ def _get_user_upload_dir(user_id: int) -> Path:
     return user_dir
 
 
+def _safe_upload_filename(filename: str) -> str:
+    """Return a basename that is safe to append to a server-controlled path."""
+    # Normalize both Windows and POSIX separators before asking pathlib for the
+    # basename so multipart clients cannot escape the user's upload directory.
+    safe_name = Path((filename or "").replace("\\", "/")).name
+    if safe_name in {"", ".", ".."}:
+        raise ValueError("文件名不合法")
+    return safe_name
+
+
+def _resolve_user_upload_path(user_id: int, name: str) -> Path:
+    """Resolve a path and prove it remains within the user's upload directory."""
+    user_dir = _get_user_upload_dir(user_id).resolve()
+    path = (user_dir / name).resolve()
+    try:
+        path.relative_to(user_dir)
+    except ValueError as exc:
+        raise ValueError("文件路径超出用户上传目录") from exc
+    return path
+
+
+def _resolve_report_file_path(report: Report) -> Path:
+    """Return a report file only when its stored path belongs to its owner."""
+    if not report.file_path:
+        raise ValueError("报告文件路径为空")
+    return _resolve_user_upload_path(report.user_id, report.file_path)
+
+
 async def upload_reports(
     db: Session,
     files: List,
@@ -69,12 +97,9 @@ async def upload_reports(
     uploaded = []
     errors = []
 
-    # 用户专属目录：uploads/{user_id}/
-    user_upload_dir = _get_user_upload_dir(user_id)
-
     for f in files:
         try:
-            filename = f.filename or "unknown.docx"
+            filename = _safe_upload_filename(f.filename or "unknown.docx")
             ext = Path(filename).suffix.lower()
             if ext not in ALLOWED_EXTENSIONS:
                 errors.append({"file": filename, "error": "仅支持 .docx 格式"})
@@ -86,7 +111,7 @@ async def upload_reports(
 
             student_name, student_id = _extract_student_info(filename)
             safe_name = f"{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{filename}"
-            file_path = user_upload_dir / safe_name
+            file_path = _resolve_user_upload_path(user_id, safe_name)
 
             file_bytes = await f.read()
             with open(file_path, "wb") as fp:
@@ -178,7 +203,8 @@ def reparse_report_if_needed(db: Session, report: Report) -> bool:
         return False
 
     try:
-        blocks = parse_docx_report(report.file_path)
+        file_path = _resolve_report_file_path(report)
+        blocks = parse_docx_report(str(file_path))
     except Exception as exc:
         report.parse_warning = f"新解析器升级失败，暂保留旧文本块：{str(exc)[:300]}"
         return False
@@ -278,12 +304,16 @@ def delete_report(db: Session, report_id: int, user_id: int) -> bool:
 
     # 1. 删除物理文件
     if report.file_path:
-        path = Path(report.file_path)
-        if path.exists():
-            try:
-                path.unlink()
-            except Exception as e:
-                print(f"Failed to delete file {path}: {e}")
+        try:
+            path = _resolve_report_file_path(report)
+        except ValueError as exc:
+            print(f"Refusing to delete report file outside upload directory: {exc}")
+        else:
+            if path.exists():
+                try:
+                    path.unlink()
+                except Exception as e:
+                    print(f"Failed to delete file {path}: {e}")
 
     # 2. 从底库中删除向量 (如果有)
     from app.services.vector_store_service import delete_report_from_library
