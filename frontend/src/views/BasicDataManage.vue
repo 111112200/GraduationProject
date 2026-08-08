@@ -1,13 +1,13 @@
 <template>
   <div class="page">
-    <h2 class="g-page-title">🗂️ 基础数据管理</h2>
+    <h2 class="g-page-title">基础数据管理</h2>
     <p class="g-page-desc">管理系统中的班级基础数据</p>
 
     <!-- ===== 班级管理 ===== -->
     <section class="data-section">
       <div class="section-header">
-        <h3 class="section-title">📚 班级管理</h3>
-        <button class="g-btn g-btn-primary" @click="openClassModal">＋ 新建班级</button>
+        <h3 class="section-title">班级管理</h3>
+        <button class="g-btn g-btn-primary" @click="openClassModal">新建班级</button>
       </div>
       <div class="g-card">
         <table class="g-table" v-if="classes.length">
@@ -228,4 +228,10 @@ onMounted(loadClasses)
 .full-width {
   width: 100%;
 }
+
+.data-section { margin-bottom: 30px; }
+.section-header { margin-bottom: 12px; }
+.section-title { color: var(--gray-900); }
+.action-btn-danger { padding: 5px 10px; border-radius: 6px; }
+.action-btn-danger:hover { color: var(--danger); background: var(--danger-bg); }
 </style>

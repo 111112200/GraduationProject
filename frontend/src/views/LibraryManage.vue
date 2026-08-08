@@ -1,6 +1,6 @@
 <template>
   <div class="page">
-    <h2 class="g-page-title">📚 指纹底库管理</h2>
+    <h2 class="g-page-title">指纹底库管理</h2>
     <p class="g-page-desc">已入库的报告将作为历史底库，用于后续查重任务中的「历史库比对」</p>
     <div class="g-card">
       <table class="g-table" v-if="reports.length">

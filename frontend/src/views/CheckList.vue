@@ -1,8 +1,8 @@
 <template>
   <div class="page">
     <div class="page-header">
-      <h2 class="g-page-title">🔍 查重任务</h2>
-      <router-link to="/checks/create" class="g-btn g-btn-primary">＋ 新建查重任务</router-link>
+      <h2 class="g-page-title">查重任务</h2>
+      <router-link to="/checks/create" class="g-btn g-btn-primary">新建查重任务</router-link>
     </div>
     <div class="g-card">
       <div v-if="tasks.length" class="task-list">
@@ -16,7 +16,7 @@
               <span class="task-time">{{ formatTime(t.createdAt) }}</span>
             </div>
           </div>
-          <button @click.stop="deleteTask(t.taskId)" class="g-btn g-btn-danger btn-del" title="删除任务">🗑 删除</button>
+          <button @click.stop="deleteTask(t.taskId)" class="g-btn g-btn-danger btn-del" title="删除任务">删除</button>
         </div>
       </div>
       <div v-else class="g-empty">
@@ -140,5 +140,14 @@ onMounted(load)
   padding: 5px 14px;
   font-size: 12px;
   flex-shrink: 0;
+}
+
+.task-card { min-height: 72px; padding: 15px 18px; }
+.task-card:hover { background: #f8fbff; }
+.btn-del { padding: 5px 10px; border-radius: 6px; }
+
+@media (max-width: 560px) {
+  .task-card { align-items: flex-start; gap: 12px; }
+  .task-meta { align-items: flex-start; flex-direction: column; gap: 5px; }
 }
 </style>

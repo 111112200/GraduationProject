@@ -7,7 +7,7 @@
       <!-- 抽屉头部 -->
       <div class="drawer-header">
         <div class="drawer-title-wrap">
-          <span class="drawer-icon">🔬</span>
+          <span class="drawer-icon" aria-hidden="true">SR</span>
           <div>
             <h3 class="drawer-title">向量分块详情</h3>
             <p class="drawer-subtitle" v-if="reportName">{{ reportName }}</p>
@@ -269,7 +269,7 @@ function renderChunk(chunk, expanded) {
   padding: 20px 24px;
   border-bottom: 1px solid var(--gray-100);
   flex-shrink: 0;
-  background: linear-gradient(135deg, #f0f7ff 0%, #fff 100%);
+  background: #fff;
 }
 
 .drawer-title-wrap {
@@ -279,8 +279,15 @@ function renderChunk(chunk, expanded) {
 }
 
 .drawer-icon {
-  font-size: 28px;
-  line-height: 1;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 6px;
+  background: var(--primary-bg);
+  color: var(--primary-dark);
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .drawer-title {
@@ -306,7 +313,7 @@ function renderChunk(chunk, expanded) {
   border: none;
   background: var(--gray-100);
   color: var(--gray-500);
-  border-radius: 50%;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
   display: flex;
@@ -461,7 +468,7 @@ function renderChunk(chunk, expanded) {
 .chunk-card {
   background: #fff;
   border: 1px solid var(--gray-200);
-  border-radius: var(--radius-md);
+  border-radius: 6px;
   overflow: hidden;
   transition: box-shadow 0.2s;
 }
@@ -504,7 +511,7 @@ function renderChunk(chunk, expanded) {
   padding: 2px 8px;
   background: var(--primary-bg);
   color: var(--primary-dark);
-  border-radius: var(--radius-full);
+  border-radius: 3px;
   font-weight: 500;
 }
 
@@ -519,7 +526,7 @@ function renderChunk(chunk, expanded) {
   color: var(--primary);
   background: none;
   border: 1px solid var(--primary-light);
-  border-radius: var(--radius-full);
+  border-radius: 4px;
   padding: 2px 10px;
   cursor: pointer;
   transition: all 0.15s;
@@ -571,7 +578,7 @@ function renderChunk(chunk, expanded) {
 .overlap-tag {
   font-size: 11px;
   padding: 2px 10px;
-  border-radius: var(--radius-full);
+  border-radius: 3px;
   font-weight: 500;
 }
 

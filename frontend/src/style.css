@@ -2,50 +2,50 @@
 
 :root {
   /* 主色调 — 蓝白色系 */
-  --primary: #409eff;
-  --primary-light: #79bbff;
-  --primary-dark: #2378d4;
-  --primary-bg: #ecf5ff;
+  --primary: #2f67d8;
+  --primary-light: #7ea5ee;
+  --primary-dark: #21499e;
+  --primary-bg: #eff4ff;
 
   /* 功能色 */
-  --success: #67c23a;
-  --success-bg: #e1f3d8;
-  --warning: #e6a23c;
-  --warning-bg: #fdf6ec;
-  --danger: #f56c6c;
-  --danger-bg: #fef0f0;
-  --info: #409eff;
-  --info-bg: #ecf5ff;
+  --success: #2d8a6e;
+  --success-bg: #e6f5ef;
+  --warning: #b7791f;
+  --warning-bg: #fff8e7;
+  --danger: #c95757;
+  --danger-bg: #fff0f0;
+  --info: #2f67d8;
+  --info-bg: #eff4ff;
 
   /* 中性色 */
-  --gray-50: #f5f7fa;
-  --gray-100: #f0f2f5;
-  --gray-200: #dcdfe6;
-  --gray-300: #c0c4cc;
-  --gray-400: #909399;
-  --gray-500: #606266;
-  --gray-600: #475569;
-  --gray-700: #303133;
-  --gray-800: #1e293b;
-  --gray-900: #0f172a;
+  --gray-50: #f7f9fc;
+  --gray-100: #eef1f5;
+  --gray-200: #d8dee8;
+  --gray-300: #bac4d2;
+  --gray-400: #7e8a9a;
+  --gray-500: #596779;
+  --gray-600: #3f4d5e;
+  --gray-700: #263445;
+  --gray-800: #18283a;
+  --gray-900: #0d1d2d;
 
   /* 渐变 */
-  --gradient-primary: linear-gradient(135deg, #409eff 0%, #2378d4 100%);
-  --gradient-header: linear-gradient(135deg, #1a73e8 0%, #409eff 100%);
-  --gradient-card: linear-gradient(145deg, #ffffff 0%, #f5f7fa 100%);
+  --gradient-primary: #2f67d8;
+  --gradient-header: #ffffff;
+  --gradient-card: #ffffff;
 
   /* 阴影 */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.08);
-  --shadow-card: 0 2px 12px rgba(64, 158, 255, 0.06);
-  --shadow-card-hover: 0 8px 25px rgba(64, 158, 255, 0.12);
+  --shadow-card: 0 1px 2px rgba(13, 29, 45, 0.04), 0 5px 18px rgba(13, 29, 45, 0.04);
+  --shadow-card-hover: 0 5px 20px rgba(13, 29, 45, 0.08);
 
   /* 圆角 */
   --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
   --radius-full: 999px;
 
   /* 过渡 */
@@ -79,7 +79,7 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'PingFang SC', 'Microsoft YaHei', sans-serif;
   color: var(--gray-800);
-  background: var(--gray-50);
+  background: #f2f5f8;
   line-height: 1.6;
 }
 
@@ -91,6 +91,22 @@ a {
 
 a:hover {
   color: var(--primary-dark);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(47, 103, 216, 0.24);
+  outline-offset: 2px;
 }
 
 /* ===== 通用按钮 ===== */
@@ -117,12 +133,12 @@ a:hover {
 .g-btn-primary {
   background: var(--primary);
   color: #fff;
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
+  box-shadow: 0 2px 7px rgba(47, 103, 216, 0.2);
 }
 
 .g-btn-primary:hover {
   background: var(--primary-dark);
-  box-shadow: 0 4px 14px rgba(64, 158, 255, 0.4);
+  box-shadow: 0 4px 12px rgba(47, 103, 216, 0.25);
   color: #fff;
 }
 
@@ -157,6 +173,7 @@ a:hover {
 .g-card {
   background: #fff;
   border-radius: var(--radius-lg);
+  border: 1px solid var(--gray-200);
   box-shadow: var(--shadow-card);
   overflow: hidden;
   transition: box-shadow var(--transition-base);
@@ -189,8 +206,8 @@ a:hover {
   font-weight: 600;
   color: var(--gray-600);
   font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .g-table tbody tr {
@@ -218,7 +235,7 @@ a:hover {
   border-radius: var(--radius-full);
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
 }
 
 .g-badge-success {
@@ -264,6 +281,11 @@ a:hover {
 .g-select:focus {
   border-color: var(--primary-light);
   box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
+}
+
+textarea.g-input {
+  min-height: 92px;
+  resize: vertical;
 }
 
 /* ===== 页面标题 ===== */
@@ -350,6 +372,57 @@ a:hover {
   flex-wrap: wrap;
 }
 
+.page {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.page-header,
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.section-header { margin-bottom: 12px; }
+.section-title { margin: 0; color: var(--gray-900); font-size: 16px; font-weight: 700; }
+.data-section { margin-bottom: 30px; }
+.section-hint,
+.setup-hint { color: var(--gray-500); font-size: 13px; }
+
+.form-row { margin-bottom: 18px; }
+.form-row label { display: block; margin-bottom: 7px; color: var(--gray-700); font-size: 13px; font-weight: 650; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.required { color: var(--danger); }
+.optional { color: var(--gray-400); font-size: 12px; font-weight: 400; }
+.full-width { width: 100%; }
+
+.id-col { color: var(--gray-400); font-size: 13px; }
+.action-col { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.action-link,
+.action-btn-info,
+.action-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.action-link:hover,
+.action-btn-info:hover { background: var(--primary-bg); color: var(--primary-dark); }
+.action-btn-danger { color: var(--danger); }
+.action-btn-danger:hover { background: var(--danger-bg); color: var(--danger); }
+
 /* ===== 动画 ===== */
 @keyframes fadeInUp {
   from {
@@ -394,7 +467,8 @@ a:hover {
 
 .g-modal {
   background: #fff;
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
   box-shadow: var(--shadow-lg);
   width: 400px;
   max-width: 90vw;
@@ -429,4 +503,16 @@ a:hover {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+@media (max-width: 800px) {
+  .main-content { padding: 20px 16px; }
+  .form-grid { grid-template-columns: 1fr; gap: 0; }
+  .page-header,
+  .section-header { align-items: flex-start; flex-direction: column; }
+  .g-toolbar { align-items: stretch; flex-direction: column; }
+  .g-toolbar .g-select,
+  .g-toolbar .g-btn { width: 100%; }
+  .g-table { min-width: 720px; }
+  .g-card { overflow-x: auto; }
 }

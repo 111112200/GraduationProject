@@ -1,12 +1,12 @@
 <template>
   <div class="page">
-    <h2 class="g-page-title">📘 课程与实验管理</h2>
+    <h2 class="g-page-title">课程与实验管理</h2>
     <p class="g-page-desc">先创建课程，再为课程配置实验；查重任务和报告可关联到对应实验。</p>
 
     <section class="data-section">
       <div class="section-header">
-        <h3 class="section-title">📘 课程</h3>
-        <button class="g-btn g-btn-primary" @click="openCourseModal">＋ 新建课程</button>
+        <h3 class="section-title">课程</h3>
+        <button class="g-btn g-btn-primary" @click="openCourseModal">新建课程</button>
       </div>
       <div class="g-card">
         <table v-if="courses.length" class="g-table">
@@ -36,8 +36,8 @@
 
     <section class="data-section">
       <div class="section-header">
-        <h3 class="section-title">🧪 实验</h3>
-        <button class="g-btn g-btn-primary" :disabled="!courses.length" @click="openExperimentModal">＋ 新建实验</button>
+        <h3 class="section-title">实验</h3>
+        <button class="g-btn g-btn-primary" :disabled="!courses.length" @click="openExperimentModal">新建实验</button>
       </div>
       <p v-if="!courses.length" class="section-hint">请先创建至少一门课程，才能新建实验。</p>
       <div class="g-card">
@@ -249,4 +249,10 @@ onMounted(loadData)
 .required { color: var(--danger); }
 .full-width { box-sizing: border-box; width: 100%; }
 textarea.g-input { resize: vertical; }
+
+.data-section { margin-bottom: 30px; }
+.section-header { margin-bottom: 12px; }
+.section-title { color: var(--gray-900); }
+.action-btn-danger { padding: 5px 10px; border-radius: 6px; }
+.action-btn-danger:hover { color: var(--danger); background: var(--danger-bg); }
 </style>

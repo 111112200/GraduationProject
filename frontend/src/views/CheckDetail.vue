@@ -1,10 +1,10 @@
 <template>
   <div class="page">
     <div class="top-bar">
-      <router-link to="/checks" class="back-link">← 返回任务列表</router-link>
+      <router-link to="/checks" class="back-link">返回任务列表</router-link>
       <h2 class="g-page-title">{{ task?.name || '查重结果' }}</h2>
       <span :class="['g-badge', badgeClass(task?.status)]">
-        {{ statusIcon(task?.status) }} {{ statusLabel(task?.status) }}
+        {{ statusLabel(task?.status) }}
       </span>
       <button
         v-if="task?.status === 'COMPLETED' && task?.results?.length"
@@ -12,7 +12,7 @@
         :disabled="exporting"
         class="g-btn g-btn-primary export-btn"
       >
-        {{ exporting ? '⏳ 导出中...' : '📥 导出 Excel' }}
+        {{ exporting ? '导出中...' : '导出 Excel' }}
       </button>
     </div>
 
@@ -22,9 +22,9 @@
     </div>
 
     <div v-else-if="task?.status === 'RUNNING' || task?.status === 'PENDING'" class="g-card g-card-body pending-card">
-      <div class="pending-icon">⏳</div>
-      <div class="pending-text">查重任务正在执行中，请稍后刷新页面查看结果</div>
-      <button @click="load" class="g-btn g-btn-primary" style="margin-top: 12px;">🔄 刷新</button>
+      <div class="pending-label">检测任务正在执行</div>
+      <div class="pending-text">任务完成后，这里会展示每份报告的风险结论和相似片段。</div>
+      <button @click="load" class="g-btn g-btn-primary" style="margin-top: 16px;">刷新结果</button>
     </div>
 
     <div v-else class="g-card">
@@ -56,12 +56,12 @@
             </td>
             <td>
               <span :class="['g-badge', riskBadge(r.riskLevel)]">
-                {{ riskIcon(r.riskLevel) }} {{ riskLabel(r.riskLevel) }}
+                {{ riskLabel(r.riskLevel) }}
               </span>
             </td>
             <td>
               <router-link :to="`/reports/${r.reportId}/result`" class="g-btn g-btn-primary" style="padding: 5px 14px; font-size: 12px;">
-                查看详情 →
+                查看详情
               </router-link>
             </td>
           </tr>
@@ -165,12 +165,9 @@ onMounted(load)
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.pending-card {
-  text-align: center;
-  padding: 48px 24px;
-}
-.pending-icon { font-size: 48px; margin-bottom: 12px; }
-.pending-text { color: var(--gray-500); font-size: 15px; }
+.pending-card { padding: 38px 32px; border-left: 4px solid var(--primary); text-align: left; }
+.pending-label { color: var(--gray-900); font-size: 18px; font-weight: 700; }
+.pending-text { margin-top: 7px; color: var(--gray-500); font-size: 14px; }
 
 .student-col { font-weight: 500; }
 .file-col { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gray-600); font-size: 13px; }
@@ -190,4 +187,8 @@ onMounted(load)
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.top-bar { min-height: 42px; margin-bottom: 18px; }
+.back-link { color: var(--gray-500); font-size: 13px; }
+.back-link:hover { color: var(--primary-dark); }
 </style>

@@ -3,41 +3,44 @@
     <!-- 左侧侧边栏 -->
     <aside class="sidebar">
       <div class="sidebar-brand">
-        <span class="sidebar-logo">📄</span>
-        <span class="sidebar-title">语义查重系统</span>
+        <span class="sidebar-logo" aria-hidden="true">SR</span>
+        <span class="sidebar-brand-copy">
+          <span class="sidebar-eyebrow">Academic workspace</span>
+          <span class="sidebar-title">语义查重</span>
+        </span>
       </div>
       <nav class="sidebar-nav">
         <router-link to="/dashboard" class="sidebar-link" active-class="active">
-          <span class="sidebar-icon">🏠</span>
+          <span class="sidebar-icon" aria-hidden="true"></span>
           <span class="sidebar-text">首页</span>
         </router-link>
         <router-link to="/reports/upload" class="sidebar-link" active-class="active">
-          <span class="sidebar-icon">📤</span>
+          <span class="sidebar-icon" aria-hidden="true"></span>
           <span class="sidebar-text">上传报告</span>
         </router-link>
         <router-link to="/reports" class="sidebar-link" active-class="active">
-          <span class="sidebar-icon">📋</span>
+          <span class="sidebar-icon" aria-hidden="true"></span>
           <span class="sidebar-text">报告管理</span>
         </router-link>
         <router-link to="/checks" class="sidebar-link" active-class="active">
-          <span class="sidebar-icon">🔍</span>
+          <span class="sidebar-icon" aria-hidden="true"></span>
           <span class="sidebar-text">查重任务</span>
         </router-link>
         <router-link to="/library" class="sidebar-link" active-class="active">
-          <span class="sidebar-icon">📚</span>
+          <span class="sidebar-icon" aria-hidden="true"></span>
           <span class="sidebar-text">底库管理</span>
         </router-link>
         <router-link to="/course-experiments" class="sidebar-link" active-class="active">
-          <span class="sidebar-icon">📘</span>
+          <span class="sidebar-icon" aria-hidden="true"></span>
           <span class="sidebar-text">课程与实验</span>
         </router-link>
         <router-link to="/basic-data" class="sidebar-link" active-class="active">
-          <span class="sidebar-icon">🗂️</span>
+          <span class="sidebar-icon" aria-hidden="true"></span>
           <span class="sidebar-text">班级管理</span>
         </router-link>
       </nav>
       <div class="sidebar-footer">
-        <span class="sidebar-version">v1.2.5</span>
+        <span class="sidebar-version">语义检测 · v1.2.5</span>
       </div>
     </aside>
 
@@ -46,22 +49,21 @@
       <!-- 顶部栏 -->
       <header class="topbar">
         <div class="topbar-left">
+          <span class="topbar-context">管理控制台</span>
           <h2 class="topbar-title">{{ pageTitle }}</h2>
         </div>
         <div class="topbar-right">
           <span class="topbar-time">{{ currentTime }}</span>
           <div class="user-profile" @mouseenter="showDropdown = true" @mouseleave="hideDropdown">
-            <div class="topbar-avatar">👤</div>
+            <div class="topbar-avatar">{{ currentUsername.slice(0, 1).toUpperCase() }}</div>
             <span class="username">{{ currentUsername }}</span>
             <!-- 下拉菜单 -->
             <div v-show="showDropdown" class="dropdown-menu" @mouseenter="cancelHideDropdown" @mouseleave="hideDropdown">
               <div class="dropdown-item" @click="onChangePassword">
-                <span class="dropdown-icon">🔐</span>
                 <span>修改密码</span>
               </div>
               <div class="dropdown-divider"></div>
               <div class="dropdown-item dropdown-item-danger" @click="handleLogout">
-                <span class="dropdown-icon">🚪</span>
                 <span>退出账户</span>
               </div>
             </div>
@@ -387,5 +389,98 @@ onUnmounted(() => {
 .main-content {
   flex: 1;
   padding: 24px 28px;
+}
+
+/* Unified application shell */
+.layout { background: #f2f5f8; }
+.sidebar {
+  width: 236px;
+  border-right: 1px solid #263b52;
+  background: #13263a;
+  color: #dce7f4;
+}
+.sidebar-brand {
+  height: 76px;
+  gap: 11px;
+  padding: 0 18px;
+  border-bottom-color: #263b52;
+}
+.sidebar-logo {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 6px;
+  background: #dce7f4;
+  color: #13263a;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+.sidebar-brand-copy { display: flex; min-width: 0; flex-direction: column; }
+.sidebar-eyebrow { color: #8fa4ba; font-size: 10px; line-height: 1.3; }
+.sidebar-title { color: #fff; font-size: 16px; letter-spacing: 0; }
+.sidebar-nav { gap: 3px; padding: 16px 10px; }
+.sidebar-link {
+  gap: 9px;
+  min-height: 40px;
+  padding: 9px 12px;
+  border-radius: 5px;
+  color: #b6c6d6;
+}
+.sidebar-link:hover { background: #1b344d; color: #fff; }
+.sidebar-link.active { background: #284d70; color: #fff; font-weight: 650; }
+.sidebar-icon {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6d849d;
+}
+.sidebar-link.active .sidebar-icon { background: #87b3ec; transform: none; }
+.sidebar-footer { border-top-color: #263b52; padding: 14px 18px; }
+.sidebar-version { color: #8299b0; }
+.layout-right { margin-left: 236px; }
+.topbar {
+  height: 76px;
+  padding: 0 30px;
+  border-bottom-color: var(--gray-200);
+  box-shadow: 0 1px 0 rgba(13, 29, 45, 0.02);
+}
+.topbar-left { gap: 12px; }
+.topbar-context {
+  padding-right: 12px;
+  border-right: 1px solid var(--gray-200);
+  color: var(--gray-400);
+  font-size: 12px;
+  font-weight: 600;
+}
+.topbar-title { color: var(--gray-900); font-size: 17px; font-weight: 700; }
+.topbar-time { color: var(--gray-500); }
+.user-profile { gap: 10px; padding-left: 14px; border-left-color: var(--gray-200); }
+.topbar-avatar { width: 32px; height: 32px; background: #e5edf9; color: var(--primary-dark); font-size: 13px; font-weight: 800; }
+.topbar-avatar:hover { box-shadow: 0 0 0 3px rgba(47, 103, 216, 0.14); }
+.dropdown-menu { border-radius: 6px; box-shadow: var(--shadow-lg); }
+.dropdown-item { min-height: 38px; }
+.main-content { padding: 28px 30px; }
+
+@media (max-width: 800px) {
+  .layout { display: block; }
+  .sidebar {
+    position: relative;
+    width: 100%;
+    min-height: 0;
+    border-right: 0;
+    border-bottom: 1px solid #263b52;
+  }
+  .sidebar-brand { height: 62px; }
+  .sidebar-nav { flex-direction: row; padding: 8px 12px; overflow-x: auto; }
+  .sidebar-link { flex: 0 0 auto; padding: 8px 10px; }
+  .sidebar-footer { display: none; }
+  .layout-right { margin-left: 0; }
+  .topbar { height: 58px; padding: 0 16px; }
+  .topbar-context,
+  .topbar-time,
+  .username { display: none; }
+  .main-content { padding: 20px 16px; }
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
   <div class="page">
-    <h2 class="g-page-title">📤 上传实验报告</h2>
+    <h2 class="g-page-title">上传实验报告</h2>
     <p class="g-page-desc">支持 .docx 格式，可一次选择多个文件批量上传</p>
     <div class="g-card g-card-body">
       <div class="form-row">
@@ -9,7 +9,7 @@
           <select v-model="classId" class="g-select">
             <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.name }}</option>
           </select>
-          <button class="g-btn g-btn-primary" @click="openClassModal">＋ 添加班级</button>
+          <button class="g-btn g-btn-primary" @click="openClassModal">添加班级</button>
         </div>
       </div>
       <div class="form-row">
@@ -274,4 +274,14 @@ onMounted(loadOptions)
 .file-remove:hover { color: var(--danger); background: var(--danger-bg); }
 
 .upload-btn { margin-top: 8px; }
+
+.drop-zone { border-radius: 6px; border-color: var(--gray-300); background: #fbfcfd; }
+.drop-zone:hover, .drop-zone.drag-over { border-color: var(--primary); background: var(--primary-bg); }
+.file-item { border: 1px solid var(--gray-200); border-radius: 6px; background: #fff; }
+
+@media (max-width: 560px) {
+  .class-select-row { align-items: stretch; flex-direction: column; }
+  .class-select-row .g-select,
+  .class-select-row .g-btn { width: 100%; }
+}
 </style>

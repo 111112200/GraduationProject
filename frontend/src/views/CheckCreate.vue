@@ -1,6 +1,6 @@
 <template>
   <div class="page">
-    <h2 class="g-page-title">🆕 创建查重任务</h2>
+    <h2 class="g-page-title">创建查重任务</h2>
     <p class="g-page-desc">选择实验、查重模式和待检报告，一键启动语义查重</p>
     <div class="g-card g-card-body">
       <div class="form-row">
@@ -64,7 +64,7 @@
         </div>
       </div>
       <button @click="create" :disabled="creating || !experiments.length" class="g-btn g-btn-primary" style="margin-top: 8px;">
-        {{ creating ? '创建中...' : '🚀 创建并开始查重' }}
+        {{ creating ? '创建中...' : '创建并开始查重' }}
       </button>
       <p v-if="msg" :class="msgClass" style="margin-top: 12px;">{{ msg }}</p>
     </div>
@@ -236,5 +236,13 @@ onMounted(async () => {
   border: 1.5px dashed var(--gray-200);
   border-radius: var(--radius-sm);
   background: var(--gray-50, #f9fafb);
+}
+
+.report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); padding: 0; }
+.report-item { min-height: 42px; border-radius: 6px; }
+
+@media (max-width: 560px) {
+  .g-input[style] { min-width: 100% !important; width: 100%; }
+  .report-grid { grid-template-columns: 1fr; }
 }
 </style>

@@ -1,6 +1,7 @@
 <template>
   <div class="page">
-    <h2 class="g-page-title">📋 报告列表</h2>
+    <h2 class="g-page-title">报告管理</h2>
+    <p class="g-page-desc">查看报告解析状态、检测结果和向量分块内容。</p>
     <div class="g-toolbar">
       <select v-model="classId" @change="load" class="g-select">
         <option value="">全部班级</option>
@@ -233,4 +234,12 @@ onMounted(loadOptions)
   color: #fff;
   background: var(--primary);
 }
+
+.action-col { gap: 6px; }
+.action-link,
+.action-btn-info,
+.action-btn-danger { border-radius: 6px; padding: 5px 10px; }
+.action-link:hover,
+.action-btn-info:hover { color: var(--primary-dark); background: var(--primary-bg); }
+.action-btn-danger:hover { color: var(--danger); background: var(--danger-bg); }
 </style>
